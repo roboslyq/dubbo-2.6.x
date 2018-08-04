@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aop-reference-model>
+<aop-project name="dubbo-config-spring"/>
+<aop-project name="dubbo-rpc-rmi"/>
+<aop-project name="dubbo-demo-consumer"/>
+<aop-project name="dubbo-container-spring"/>
+<aop-project name="dubbo-rpc-http"/>
+<aop-project name="dubbo-config-api"/>
+<aop-project name="dubbo-test-integration"/>
+<aop-project name="dubbo-rpc-webservice"/>
+<aop-project name="dubbo-test-examples"/>
+<aop-project name="all"/>
+<aop-project name="dubbo-demo-provider"/>
+<aop-project name="dubbo-test-spring3"/>
+<aop-project name="dubbo-rpc-thrift"/>
+<aop-project name="dubbo-test-benchmark"/>
+</aop-reference-model>
