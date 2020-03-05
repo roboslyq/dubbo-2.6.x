@@ -88,11 +88,12 @@ public class ProtocolFilterWrapper implements Protocol {
     public int getDefaultPort() {
         return protocol.getDefaultPort();
     }
-
+    //具体的服务暴露
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
         }
+        // buildInvokerChain()构建调用器链，即Filter链的功能实现。
         return protocol.export(buildInvokerChain(invoker, Constants.SERVICE_FILTER_KEY, Constants.PROVIDER));
     }
 

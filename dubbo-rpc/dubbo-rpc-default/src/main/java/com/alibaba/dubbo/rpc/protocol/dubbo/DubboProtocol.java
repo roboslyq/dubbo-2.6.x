@@ -226,7 +226,7 @@ public class DubboProtocol extends AbstractProtocol {
         return DEFAULT_PORT;
     }
     /**
-     * 启动dubbo服务监听，默认是netty
+     * 暴露服务，同时启动dubbo服务监听，默认是netty
      */
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         URL url = invoker.getUrl();
