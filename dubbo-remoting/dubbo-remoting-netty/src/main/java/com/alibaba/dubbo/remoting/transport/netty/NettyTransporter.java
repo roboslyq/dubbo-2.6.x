@@ -28,6 +28,7 @@ public class NettyTransporter implements Transporter {
     public static final String NAME = "netty";
 
     public Server bind(URL url, ChannelHandler listener) throws RemotingException {
+        // listener 为DecodeChannelHandler。并且在构造器中实现服务启动，完成初始化
         return new NettyServer(url, listener);
     }
 

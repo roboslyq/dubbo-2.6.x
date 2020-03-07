@@ -635,6 +635,14 @@ public class ExtensionLoader<T> {
     /**
      * 获得自适应拓展对象
      * 自适应可以理解为策略模式实现，根据客户端调用传过来的值来获取不同的对象。包括有自适应默认实现。
+     * 例如：下面方法就是根据传入的的值返回不同值
+     * get(a){
+     *     if(a= "b") return xxx
+     *     else if(a = "c") return yyy
+     *     else{
+     *         return "default"
+     *     }
+     * }
      * @return 拓展对象
      */
     @SuppressWarnings("unchecked")
@@ -834,6 +842,8 @@ public class ExtensionLoader<T> {
         loadFile(extensionClasses, DUBBO_INTERNAL_DIRECTORY);
         loadFile(extensionClasses, DUBBO_DIRECTORY);
         loadFile(extensionClasses, SERVICES_DIRECTORY);
+//        0 = {HashMap$Node@1707} "spring" -> "class com.alibaba.dubbo.config.spring.extension.SpringExtensionFactory"
+//        1 = {HashMap$Node@1708} "spi" -> "class com.alibaba.dubbo.common.extension.factory.SpiExtensionFactory"
         return extensionClasses;
     }
 

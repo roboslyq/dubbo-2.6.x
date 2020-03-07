@@ -8,7 +8,7 @@
 
 可参考官网[XML Schema Authoring](https://docs.spring.io/spring/docs/5.1.14.RELEASE/spring-framework-reference/core.html#xml-custom)
 
-`Spring Schema`扩展共分5步：
+`Spring Schema`扩展可以按如下步骤进行：
 
 - 定义好Bean
 - 要的Beam定义xsd文件
@@ -17,6 +17,8 @@
 - 编写`spring.handlers`和`spring.schemas`文件，将上面实现的组件与Spring进行绑定
 - 编写Bean文件<Xml形式>
 - 测试
+
+必要步骤只需要中间4步。
 
 #### 1、编写自定义Bean
 
@@ -357,16 +359,12 @@ public class DubboNamespaceHandler extends NamespaceHandlerSupport {
 -  <dubbo:reference/>-服务消费者
 -  <dubbo:annotation/>-可选参数
 
+## 知识点
 
-
-
-
-
-
-2、具体DUBBO的Provider初始成为什么Bean?
+**1、具体DUBBO的Provider初始成为什么Bean?**
 	(1)DUBBO可以不依赖于Spring独立运行，此时，配置service对应ServiceConfig
 	(2)为了集成Spring,加入了ServiceBean继承了ServiceConfig。
 
-3、DUBBO的COUSUME怎么初始化？
+**2、DUBBO的COUSUME怎么初始化？**
 	Consumer配置与ReferenceConfig对应。为了与Spring集成，发现服务的过程又加入了一个和Spring相关联的ReferenceBean，继承了ReferenceConfig。
-	利用Spring就做了上述过程，得到相应的配置数据，然后启动相应的服务。如果想剥离Spring，我们就可以手动来创建上述配置对象，通过ServiceConfig和ReferenceConfig的API来启动相应的服务
+	利用Spring的Schematic扩展机制，得到相应的配置数据，然后启动相应的服务。如果想剥离Spring，我们就可以手动来创建上述配置对象，通过ServiceConfig和ReferenceConfig的API来启动相应的服务

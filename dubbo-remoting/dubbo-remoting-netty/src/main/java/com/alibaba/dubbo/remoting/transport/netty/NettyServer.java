@@ -57,10 +57,20 @@ public class NettyServer extends AbstractServer implements Server {
 
     private org.jboss.netty.channel.Channel channel;
 
+    /**
+     * 对netty服务器抽象
+     * @param url
+     * @param handler
+     * @throws RemotingException
+     */
     public NettyServer(URL url, ChannelHandler handler) throws RemotingException {
         super(url, ChannelHandlers.wrap(handler, ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME)));
     }
 
+    /**
+     * 启动netty服务器
+     * @throws Throwable
+     */
     @Override
     protected void doOpen() throws Throwable {
         NettyHelper.setNettyLoggerFactory();
@@ -76,6 +86,7 @@ public class NettyServer extends AbstractServer implements Server {
         // final Timer timer = new HashedWheelTimer(new NamedThreadFactory("NettyIdleTimer", true));
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() {
+                //设置netty的adapter(编码/解码)
                 NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyServer.this);
                 ChannelPipeline pipeline = Channels.pipeline();
                 /*int idleTimeout = getIdleTimeout();
@@ -88,7 +99,7 @@ public class NettyServer extends AbstractServer implements Server {
                 return pipeline;
             }
         });
-        // bind
+        // bind(启动Netty服务)
         channel = bootstrap.bind(getBindAddress());
     }
 

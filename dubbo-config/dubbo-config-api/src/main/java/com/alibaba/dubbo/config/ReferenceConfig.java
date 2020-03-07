@@ -217,7 +217,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         // 拼接属性配置（环境变量 + properties 属性）到 ReferenceConfig 对象
         appendProperties(this);
         // 若未设置 `generic` 属性，使用 `ConsumerConfig.generic` 属性。
-        if (getGeneric() == null && getConsumer() != null) {//【TODO 8002】芋艿，不只 true / false ，还有 bean 、 nativejava
+        if (getGeneric() == null && getConsumer() != null) {//【TODO 8002】，不只 true / false ，还有 bean 、 nativejava
             setGeneric(getConsumer().getGeneric());
         }
         // 泛化接口的实现

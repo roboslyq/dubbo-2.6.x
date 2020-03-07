@@ -125,13 +125,6 @@
 更多设计原则参见：[框架设计原则](http://dubbo.apache.org/zh-cn/docs/dev/principals/introduction.html)
 
 
-
-
-
-
-
-
-
 # 参考资料
 
 - 《深入理解Apache Dubbo实战》

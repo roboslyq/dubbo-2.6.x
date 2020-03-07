@@ -115,7 +115,10 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     public Service getService() {
         return service;
     }
-    //如果延迟加载(默认延迟)，此方法则为入口
+
+    /**
+     * ========>如果延迟加载(默认延迟)，此方法则为入口
+     */
     public void onApplicationEvent(ContextRefreshedEvent event) {
         if (isDelay() && !isExported() && !isUnexported()) {
             if (logger.isInfoEnabled()) {
@@ -133,10 +136,16 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
         }
         return supportedApplicationListener && (delay == null || delay == -1);
     }
-    //配置文件初始化时触发此方法
+
+    /**
+     * afterPropertiesSet() 优先级高于 onApplicationEvent(ContextRefreshedEvent event)
+     * @throws Exception
+     */
     @SuppressWarnings({"unchecked", "deprecation"})
     public void afterPropertiesSet() throws Exception {
     	 //刚启动时applicatoin为空
+        //如果provider为空，说明dubbo:service标签未设置provider属性，如果一个dubbo:provider标签，则取该实例，
+        //如果存在多个dubbo:provider配置则provider属性不能为空，否则抛出异常："Duplicate provider configs"。
         if (getProvider() == null) {
             Map<String, ProviderConfig> providerConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProviderConfig.class, false, false);
             if (providerConfigMap != null && providerConfigMap.size() > 0) {
@@ -169,9 +178,11 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
         //刚启动时applicatoin为空
+        //如果application为空,则尝试从BeanFactory中查询dubbo:application实例
         if (getApplication() == null
                 && (getProvider() == null || getProvider().getApplication() == null)) {
             Map<String, ApplicationConfig> applicationConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ApplicationConfig.class, false, false);
+            //如果存在多个dubbo:application配置，则抛出异常："Duplicate application configs"
             if (applicationConfigMap != null && applicationConfigMap.size() > 0) {
                 ApplicationConfig applicationConfig = null;
                 for (ApplicationConfig config : applicationConfigMap.values()) {
@@ -188,9 +199,11 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
         //启动时module检查
+        //如果ServiceBean的module为空，则尝试从BeanFactory中查询dubbo:module实例，
         if (getModule() == null
                 && (getProvider() == null || getProvider().getModule() == null)) {
             Map<String, ModuleConfig> moduleConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ModuleConfig.class, false, false);
+            //如果存在多个dubbo:module，则抛出异常："Duplicate module configs: "
             if (moduleConfigMap != null && moduleConfigMap.size() > 0) {
                 ModuleConfig moduleConfig = null;
                 for (ModuleConfig config : moduleConfigMap.values()) {
@@ -207,11 +220,13 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
         //启动时注册中心检查
+        //尝试从BeanFactory中加载所有的注册中心，注意ServiceBean的List< RegistryConfig> registries属性，为注册中心集合
         if ((getRegistries() == null || getRegistries().isEmpty())
                 && (getProvider() == null || getProvider().getRegistries() == null || getProvider().getRegistries().isEmpty())
                 && (getApplication() == null || getApplication().getRegistries() == null || getApplication().getRegistries().isEmpty())) {
             Map<String, RegistryConfig> registryConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, RegistryConfig.class, false, false);
             if (registryConfigMap != null && registryConfigMap.size() > 0) {
+                //所有的注册中心集合
                 List<RegistryConfig> registryConfigs = new ArrayList<RegistryConfig>();
                 for (RegistryConfig config : registryConfigMap.values()) {
                     if (config.isDefault() == null || config.isDefault().booleanValue()) {
@@ -224,6 +239,8 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
         //启动时监控中心检查
+        //尝试从BeanFacotry中加载一个监控中心，填充ServiceBean的MonitorConfig monitor属性，如果存在多个dubbo:monitor配置，则抛出"Duplicate monitor configs: "。
+
         if (getMonitor() == null
                 && (getProvider() == null || getProvider().getMonitor() == null)
                 && (getApplication() == null || getApplication().getMonitor() == null)) {
@@ -244,6 +261,8 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
         //启动时协议检查是否已经初始化
+        //尝试从BeanFactory中加载所有的协议，注意：ServiceBean的List< ProtocolConfig> protocols是一个集合，也即一个服务可以通过多种协议暴露给消费者。
+
         if ((getProtocols() == null || getProtocols().isEmpty())
                 && (getProvider() == null || getProvider().getProtocols() == null || getProvider().getProtocols().isEmpty())) {
             Map<String, ProtocolConfig> protocolConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProtocolConfig.class, false, false);
@@ -259,7 +278,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
-        //第一个初始化bean为空
+        //设置ServiceBean的path属性，path属性存放的是dubbo:service的beanName（dubbo:service id)
         if (getPath() == null || getPath().length() == 0) {
             if (beanName != null && beanName.length() > 0
                     && getInterface() != null && getInterface().length() > 0
@@ -267,8 +286,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 setPath(beanName);
             }
         }
+//        如果为启用延迟暴露机制，则调用export暴露服务。首先看一下isDelay的实现，然后重点分析export的实现原理（服务暴露的整个实现原理）
         if (!isDelay()) {
-            export();
+            export();//核心的暴露服务方法入口
         }
     }
 

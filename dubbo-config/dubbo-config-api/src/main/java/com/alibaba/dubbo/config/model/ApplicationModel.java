@@ -69,6 +69,7 @@ public class ApplicationModel {
     }
 
     public static void initProviderModel(String serviceName, ProviderModel providerModel) {
+        //使用Map结构保存所有的服务信息
         if (providedServices.put(serviceName, providerModel) != null) {
             logger.warn("already register the provider service: " + serviceName);
             return;

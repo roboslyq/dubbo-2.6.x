@@ -28,6 +28,8 @@ import com.alibaba.dubbo.remoting.exchange.support.header.HeaderExchanger;
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Message_Exchange_Pattern">Message Exchange Pattern</a>
  * <a href="http://en.wikipedia.org/wiki/Request-response">Request-Response</a>
+ * exchange 信息交换层：封装请求响应模式，同步转异步，以 Request, Response 为中心，
+ *          扩展接口为 Exchanger,  ExchangeChannel, ExchangeClient, ExchangeServer
  */
 @SPI(HeaderExchanger.NAME)
 public interface Exchanger {

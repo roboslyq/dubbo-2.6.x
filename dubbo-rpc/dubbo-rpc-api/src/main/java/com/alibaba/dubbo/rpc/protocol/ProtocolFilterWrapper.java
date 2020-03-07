@@ -90,6 +90,7 @@ public class ProtocolFilterWrapper implements Protocol {
     }
     //具体的服务暴露
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        //Invoke中的协议为registry,默认会进入此方法
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
         }

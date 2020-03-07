@@ -253,22 +253,32 @@ public class DubboProtocol extends AbstractProtocol {
         }
         //启动本地服务监听
         openServer(url);
+        //优化序列化
         optimizeSerialization(url);
         return exporter;
     }
 
     private void openServer(URL url) {
-        // find server.
+        // find server.()
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
         if (isServer) {
+            //访问缓存：key为服务器IP:port，例如：key="192.168.1.108:20880"
+            // 当第一个ServiceBean：<dubbo:service>被初始化时，此serverMap为空，所以server为空，则进入server==null分支。
+            // 然后创建server并启动(在构造函数中实现启动并绑定端口)。如果不是第一个Bean进入，则进入另一个分支server.reset(url)。
+            //更新服务的部分信息即可。不需要重复启动。
             ExchangeServer server = serverMap.get(key);
+            //如果当前服务还没创建，则新建，如果已经创建，则跳过。
             if (server == null) {
-            	//创建Server
-                serverMap.put(key, createServer(url));
+            	//创建Server《Server是Dubbo对Netty等抽象，并启动。》
+                serverMap.put(key,
+                        createServer(url)  //核心方法入口
+                );
             } else {
                 // server supports reset, use together with override
+                // 在同一台机器上（单网卡），同一个端口上仅允许启动一个服务器实例。若某个端口上已有服务器实例，
+                // 此时则调用 reset 方法重置服务器的一些配置。
                 server.reset(url);
             }
         }
@@ -280,6 +290,7 @@ public class DubboProtocol extends AbstractProtocol {
      */
     private ExchangeServer createServer(URL url) {
         // send readonly event when server closes, it's enabled by default
+        //dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.1.108&bind.port=20880&channel.readonly.sent=true&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=9080&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583509481089&version=0.0.2
         url = url.addParameterIfAbsent(Constants.CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString());
         // enable heartbeat by default-开启心跳检测
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
@@ -291,7 +302,23 @@ public class DubboProtocol extends AbstractProtocol {
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         ExchangeServer server;
         try {
-        	//通过传递url绑定一个服务
+        	//通过传递url绑定一个服务<Server是dubbo对netty等抽象>
+            /**url对象属性值如下:
+             * protocol = "dubbo"
+             * username = null
+             * password = null
+             * host = "192.168.1.108"
+             * port = 20880
+             * path = "com.alibaba.dubbo.demo.DemoService"
+             * parameters = {Collections$UnmodifiableMap@2439}  size = 18
+             * numbers = null
+             * urls = null
+             * ip = null
+             * full = null
+             * identity = null
+             * parameter = null
+             * string = "dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.1.108&bind.port=20880&channel.readonly.sent=true&codec=dubbo&dubbo=2.0.0&generic=false&group=a&heartbeat=60000&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=3404&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583571632877&version=0.0.2"
+             */
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);

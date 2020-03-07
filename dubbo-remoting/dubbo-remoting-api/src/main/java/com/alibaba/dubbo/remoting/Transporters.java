@@ -48,12 +48,14 @@ public class Transporters {
             throw new IllegalArgumentException("handlers == null");
         }
         ChannelHandler handler;
+        //DecodeHanlder-->HeaderExchangeHandler
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter().bind(url, handler);
+        return getTransporter() //Transporter$Adaptive
+                .bind(url, handler);
     }
 
     public static Client connect(String url, ChannelHandler... handler) throws RemotingException {
