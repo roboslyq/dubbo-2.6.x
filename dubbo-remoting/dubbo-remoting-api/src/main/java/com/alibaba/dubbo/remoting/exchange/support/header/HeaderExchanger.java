@@ -34,12 +34,34 @@ public class HeaderExchanger implements Exchanger {
 
     public static final String NAME = "header";
 
+    /**
+     * 客户端启动
+     * @param url
+     * @param handler
+     * @return
+     * @throws RemotingException
+     */
     public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
         return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
     }
 
+    /**
+     * 服务端启动
+     * @param url
+     * @param handler
+     * @return
+     * @throws RemotingException
+     */
     public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
-        return new HeaderExchangeServer(Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))));
+        // 创建 HeaderExchangeServer 实例，该方法包含了多个逻辑，分别如下：
+        //   1. new HeaderExchangeHandler(handler)
+        //	 2. new DecodeHandler(new HeaderExchangeHandler(handler))
+        //   3. Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler)))
+        return new HeaderExchangeServer(Transporters.bind(url,
+                                                            new DecodeHandler(
+                                                                    new HeaderExchangeHandler(handler)
+                                                            )
+        ));
     }
 
 }

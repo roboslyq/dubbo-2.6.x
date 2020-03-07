@@ -120,10 +120,14 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
      * ========>如果延迟加载(默认延迟)，此方法则为入口
      */
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        if (isDelay() && !isExported() && !isUnexported()) {
+        if (isDelay()   //isDelay()  默认为true,需要手动设置为false
+                && !isExported() // isExported()当前服务是否已经导出,正常情况为false.
+                && !isUnexported() //是否配置了取消导出服务
+                ) {
             if (logger.isInfoEnabled()) {
                 logger.info("The service ready on spring started. service: " + getInterface());
             }
+            //导出服务
             export();
         }
     }

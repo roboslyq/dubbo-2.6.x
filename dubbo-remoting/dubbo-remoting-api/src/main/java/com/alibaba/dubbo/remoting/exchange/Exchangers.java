@@ -28,6 +28,9 @@ import com.alibaba.dubbo.remoting.transport.ChannelHandlerAdapter;
 
 /**
  * Exchanger facade. (API, Static, ThreadSafe)
+ * Exchanger的门面类，将Exchanger进行包装，包括启动服务(bint()),客户端连接(connect())
+ * 1、服务端bind（）时，返回ExchangeServer
+ * 2、客户羰connect()时，返回ExchangeClient
  */
 public class Exchangers {
 
@@ -67,6 +70,7 @@ public class Exchangers {
             throw new IllegalArgumentException("handler == null");
         }
         url = url.addParameterIfAbsent(Constants.CODEC_KEY, "exchange");
+        // 获取 Exchanger，默认为 HeaderExchanger 紧接着调用 HeaderExchanger 的 bind 方法创建 ExchangeServer 实例
        //url= dubbo://192.168.0.101:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.0.101&bind.port=20880&channel.readonly.sent=true&codec=dubbo&dubbo=2.0.0&generic=false&group=a&heartbeat=60000&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=12060&qos.port=22222&revision=0.0.2&side=provider&timestamp=1530023473206&version=0.0.2
         return getExchanger(url).bind(url, handler);
     }

@@ -28,7 +28,11 @@ import javax.sound.midi.Receiver;
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Transport_Layer">Transport Layer</a>
  * <a href="http://en.wikipedia.org/wiki/Client%E2%80%93server_model">Client/Server</a>
- *
+ * 常见实现有:
+ *   NettyTransport(默认实现)
+ *   NettyTransport(netty4)
+ *   GrizzyTransport
+ *   MinaTransport
  * @see com.alibaba.dubbo.remoting.Transporters
  */
 @SPI("netty")
@@ -36,7 +40,7 @@ public interface Transporter {
 
     /**
      * Bind a server.
-     *
+     * 绑定一个服务，即启动服务（ip+port）
      * @param url     server url
      * @param handler
      * @return server
@@ -48,7 +52,7 @@ public interface Transporter {
 
     /**
      * Connect to a server.
-     *
+     * 客户端连接到一个服务
      * @param url     server url
      * @param handler
      * @return client

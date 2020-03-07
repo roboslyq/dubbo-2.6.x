@@ -24,6 +24,8 @@ import com.alibaba.dubbo.remoting.transport.ChannelHandlerDispatcher;
 
 /**
  * Transporter facade. (API, Static, ThreadSafe)
+ * Transporter的门面工具类
+ *
  */
 public class Transporters {
 
@@ -40,6 +42,13 @@ public class Transporters {
         return bind(URL.valueOf(url), handler);
     }
 
+    /**
+     * 服务端启动服务入口
+     * @param url
+     * @param handlers
+     * @return
+     * @throws RemotingException
+     */
     public static Server bind(URL url, ChannelHandler... handlers) throws RemotingException {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
@@ -52,9 +61,11 @@ public class Transporters {
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
+            // 如果 handlers 元素数量大于1，则创建 ChannelHandler 分发器
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter() //Transporter$Adaptive
+        // 获取自适应 Transporter 实例:Transporter$Adaptive，并调用实例方法
+        return getTransporter()
                 .bind(url, handler);
     }
 
@@ -62,6 +73,13 @@ public class Transporters {
         return connect(URL.valueOf(url), handler);
     }
 
+    /**
+     * 客户端启动连接服务端入口
+     * @param url
+     * @param handlers
+     * @return
+     * @throws RemotingException
+     */
     public static Client connect(URL url, ChannelHandler... handlers) throws RemotingException {
         if (url == null) {
             throw new IllegalArgumentException("url == null");

@@ -40,9 +40,9 @@ public interface ProxyFactory {
      * create invoker.
      *
      * @param <T>
-     * @param proxy
-     * @param type
-     * @param url
+     * @param proxy 接口实现,被代理对象
+     * @param type  接口类型
+     * @param url   URL:dubbo中最关键发布信息
      * @return invoker
      */
     @Adaptive({Constants.PROXY_KEY})

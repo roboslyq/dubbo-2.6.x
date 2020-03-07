@@ -318,11 +318,11 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 delay = provider.getDelay();
             }
         }
-        // 不暴露服务( export = false ) ，则不进行暴露服务逻辑。
+        // 已经导出服务(export != null ，或者不暴露服务( export = false ) ，则不进行暴露服务逻辑。
         if (export != null && !export) { //@1
             return;
         }
-        // 延迟暴露
+        // 延迟暴露《通过定时器实现》
         if (delay != null && delay > 0) {//@2
             delayExportExecutor.schedule(new Runnable() {
                 public void run() {
@@ -353,11 +353,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             return;
         }
         exported = true;
-        // 校验接口名称非空：比如 ”com.alibaba.dubbo.demo.DemoService"
+        // 校验配置文件配置的接口名称非空：比如 ”com.alibaba.dubbo.demo.DemoService"
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
-        // 检测 provider 是否为空，为空则新建一个，并通过系统变量为其初始化:（环境变量 + properties 属性）到 ProviderConfig 对象
+        // 检测 provider 是否为空，为空则新建一个，并通过系统变量为其初始化:
+        // （环境变量 + properties 属性）到 ProviderConfig 对象
         checkDefault();
         /**
          * 下面几个 if 语句用于检测 provider、application 等核心配置类对象是否为空，
@@ -399,8 +400,10 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 monitor = application.getMonitor();
             }
         }
-        // 泛化接口的实现
-//        校验ref与interface属性。如果ref是GenericService，则为dubbo的泛化实现，然后验证interface接口与ref引用的类型是否一致。
+        // 泛化接口的实现：泛化接口调用方式主要用于客户端没有 API 接口及模型类元的情况，
+        //                参数及返回值中的所有 POJO 均用 Map 表示，通常用于框架集成，
+        //                 比如：实现一个通用的服务测试框架，可通过 GenericService 调用所有服务实现。
+        //校验ref与interface属性。如果ref是GenericService，则为dubbo的泛化实现，然后验证interface接口与ref引用的类型是否一致。
         if (ref instanceof GenericService) {
             interfaceClass = GenericService.class;
             if (StringUtils.isEmpty(generic)) {
@@ -416,8 +419,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             }
             //检查接口及方法
             checkInterfaceAndMethods(interfaceClass, methods);
-            //检查ref参数是否为空 ， 校验指向的 service 对象
 
+            //检查ref参数是否为空 ， 校验指向的 service 对象
             checkRef();
             generic = Boolean.FALSE.toString();
         }
@@ -719,20 +722,21 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         if (logger.isInfoEnabled()) {
                             logger.info("Register dubbo service " + interfaceClass.getName() + " url " + url + " to registry " + registryURL);
                         }
-                        //(1) 使用ProxyFactory将具体的实现封装为一个Invoker：通过给RegistryURL设置Constants.EXPORT_KEY实现发布过程
-                        //(2)proxyFactory=com.alibaba.dubbo.rpc.ProxyFactory$Adaptive@5e231214
-                        //(3)根据@Adaptive及@SPI规则（若SPI注解在接口上，表示此接口是一个扩展点，@SPI的值为默认扩展点。Adaptive注解在方法上，
-                        //(4)表示为动态创建自适应对应及方法。若Adaptive在类上则表示当前类为自适应扩展点实现，不会动态创建）
-                        //Invoker的结构如下:
-                        /*
-                         * 1、proxy=com.alibaba.dubbo.demo.provider.DemoServiceImpl@52c7bef4
-                         * 2、this$0=javaassitProxyFactory
-                         * 3、type=interface com.alibaba.dubbo.demo.DemoService
-                         * 4、
-                         *
-                         * 注意下面的URL会影响protocol.export的操作过程。因为自适应具体协议都是从URL中获取
-                         * registryURL = registry://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&backup=39.104.184.69:2181,39.104.184.69:2181&dubbo=2.0.0&pid=10916&qos.port=22222&registry=zookeeper&timestamp=1583556079561
-                         * url.toFullString() = dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.1.108&bind.port=20880&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=10916&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583556079577&version=0.0.2
+                        /**
+                         一、
+                          (1) 使用ProxyFactory将具体的实现封装为一个Invoker：通过给RegistryURL设置Constants.EXPORT_KEY实现发布过程
+                          (2)proxyFactory=com.alibaba.dubbo.rpc.ProxyFactory$Adaptive@5e231214
+                          (3)根据@Adaptive及@SPI规则（若SPI注解在接口上，表示此接口是一个扩展点，@SPI的值为默认扩展点。Adaptive注解在方法上，
+                          (4)表示为动态创建自适应对应及方法。若Adaptive在类上则表示当前类为自适应扩展点实现，不会动态创建
+                         二、
+                         Invoker的结构如下:
+                           1、proxy=com.alibaba.dubbo.demo.provider.DemoServiceImpl@52c7bef4
+                           2、this$0=javaassitProxyFactory
+                           3、type=interface com.alibaba.dubbo.demo.DemoService
+                        三、
+                         注意创建invoker时，URL参数会影响protocol.export的操作过程。因为自适应具体协议都是从URL中获取
+                             registryURL = registry://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&backup=39.104.184.69:2181,39.104.184.69:2181&dubbo=2.0.0&pid=10916&qos.port=22222&registry=zookeeper&timestamp=1583556079561
+                             url.toFullString() = dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.1.108&bind.port=20880&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=10916&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583556079577&version=0.0.2
                          */
                         //注意,dubbo的URL被RegistryURL包装着
                         //registry://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService?
@@ -741,21 +745,25 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         //&dubbo=2.0.0
                         //&export=dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.1.108&bind.port=20880&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=10752&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583556370434&version=0.0.2&pid=10752&qos.port=22222&registry=zookeeper&timestamp=1583556370419
                         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, url.toFullString()));
-                        /* 包装之后
+                        /* 包装之后: DelegateProviderMetaDataInvoker 持有 Invoker 和 ServiceConfig(即this参数)
                          */
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
                         /*
+                         * 导出服务，并生成 Exporter:
                          *  1、使用Protocol将一个Invoker封装为一个Exporter(此时决定了Invoker具体协议RegistryProtocol)
                          *  2、protocol = com.alibaba.dubbo.rpc.Protocol$Adaptive@5b51a9d4,是dubbo中的一处“自适应扩展实现”，会根据wrapper中相关protocol参数获取
                          *      具体的相应实现。
                          *  3、此Protocol即zookeeper，nacos等注册中心注册实现
                          *  4、protocl.export()方法会被拦ProtocolListenerWrapper-->截器
                         */
+                        //RegistryProtocol
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
+
                         //将exporter保存到exporters列表中
                         exporters.add(exporter);
                     }
-                } else {
+                } else { // 不存在注册中心，仅导出服务
+
                 	// 用于被服务消费者直连服务提供者，参见文档 http://dubbo.io/books/dubbo-user-book/demos/explicit-target.html 。主要用于开发测试环境使用。
                     // 使用 ProxyFactory 创建 Invoker 对象
                     Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url);
@@ -779,16 +787,17 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
+
+        // 如果 URL 的协议头等于 injvm，说明已经导出到本地了，无需再次导出
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
             // 创建本地 Dubbo URL
             URL local = URL.valueOf(url.toFullString())
-                    .setProtocol(Constants.LOCAL_PROTOCOL)
+                    .setProtocol(Constants.LOCAL_PROTOCOL)// 设置协议头为 injvm(更换协议头)
                     .setHost(LOCALHOST)
                     .setPort(0);
             // 【TODO 8012】，rest protocol
             ServiceClassHolder.getInstance().pushServiceClass(getServiceClass(ref));
-            // 使用 ProxyFactory 创建 Invoker 对象
-            // 使用 Protocol 暴露 Invoker 对象
+            // 使用 ProxyFactory 创建 Invoker 对象，使用 Protocol 暴露 Invoker 对象，这里的 protocol 会在运行时调用 InjvmProtocol 的 export 方法
             Exporter<?> exporter = protocol.export(
                     proxyFactory.getInvoker(ref, (Class) interfaceClass, local));
             // 添加到 `exporters`
