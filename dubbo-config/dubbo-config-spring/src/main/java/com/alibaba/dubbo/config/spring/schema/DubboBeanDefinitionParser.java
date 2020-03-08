@@ -86,6 +86,19 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
     @SuppressWarnings("unchecked")
     private static BeanDefinition parse(Element element, ParserContext parserContext, Class<?> beanClass, boolean required) {
         RootBeanDefinition beanDefinition = new RootBeanDefinition();
+        /**
+         * beanClass即为DubboNamespaceHandler中注册的9大配置类
+         * ApplicationConfig.class
+         * ModuleConfig.class
+         * ServieBean.class
+         * ReferenceBean.class
+         * ProtocolConfig.class
+         * RegistryConfig.class
+         * MonitorConfig.class
+         * ProviderConfig.class
+         * ConsumerConfig.class
+         */
+        //设置Bean的Class类型，即Bean类型，最终会在SpringIOC容器中，创建一个当前类型的Bean。
         beanDefinition.setBeanClass(beanClass);
         beanDefinition.setLazyInit(false);
         String id = element.getAttribute("id");

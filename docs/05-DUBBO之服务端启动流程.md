@@ -10,9 +10,71 @@
 
 ![2](./images/05/2.png)
 
+先从官网提供的图来对整个服务导出(暴露)的过程进行总结:
+
+1. Spring事件通知机制：在所有的BeanDefinition创建完成之后，会发起相关的通知。onApplicationEvent。此处为Actor入口
+2. 开始本地服务导出：`ServiceConfig`调用`ProxyFacotry#getInvoker(T proxy, Class<T> type, URL url)`，此时url为`injvm`类型。通过字节码技术(默认`JavaAssit`)创建出了`Invoker`代理类，此类代理具体实的实现类。
+3. 创建出Invoker之后，然后根据具体的`Protocol`进行导出操作`Protocol#export(Invoker<T> invoker) `。会在导出方法中完成服务器启动，监听相关IP和PORT（通过`Exchanges`和`TransferPort`相关完成），并最终返回Exporter对象。此时，本地服务已经启动完成，可以进行直连调用。
+4. 在本地服务导出(服务启动)之后，若服务不需要注册，则结束。如果服务需要注册，则调用`ProxyFacotry#getInvoker(T proxy, Class<T> type, URL url)`，此时url为`Registry`类型。在`RegitstryProtocol`中，会根据具体的协议(比如`DubboProtocol`)先启动服务，然后在调用具体的`registry()`方法进行注册中心注册。
+
+## 0、XML配置元素
+
+后面讲解，以
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:myns="http://www.mycompany.com/schema/myns"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.mycompany.com/schema/myns http://www.mycompany.com/schema/myns/myns.xsd">
+
+    <!-- as a top-level bean -->
+    <myns:dateformat id="defaultDateFormat" pattern="yyyy-MM-dd HH:mm" lenient="true"/>
+    <myns:user id="1" age="20" name="roboslyq"/>
+    <myns:user id="2" age="21" name="roboslyq"/>
+
+    <bean id="jobDetailTemplate" abstract="true">
+        <property name="dateFormat">
+            <!-- as an inner bean -->
+            <myns:dateformat pattern="HH:mm MM-dd-yyyy"/>
+        </property>
+    </bean>
+
+</beans>
+```
 
 
-## 1、入口NameSpaceHandler与DubboBeanDefinitionParser
+
+## 1、Spring入口类DefaultBeanDefinitionDocumentReader`
+
+关于此`DefaultBeanDefinitionDocumentReader`之前的Spring启动流程，此处就不详细讲解了。有需要的朋友可以自行百度，查找其它资料。此处主要分析Dubbo相关标签解析，从`DefaultBeanDefinitionDocumentReader#parseBeanDefinitions`方法开始：
+
+```java
+protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {		//此条件为true,因为dubbo的配置，也是以spring 的bean标签为最外层标签。
+		if (delegate.isDefaultNamespace(root)) {
+			NodeList nl = root.getChildNodes();
+			for (int i = 0; i < nl.getLength(); i++) {
+				Node node = nl.item(i);
+                //排除xml中的杂项元素，比如注释，xmlns等
+                //
+				if (node instanceof Element) {
+					Element ele = (Element) node;
+					if (delegate.isDefaultNamespace(ele)) {
+						parseDefaultElement(ele, delegate);
+					}
+					else {
+						delegate.parseCustomElement(ele);
+					}
+				}
+			}
+		}
+```
+
+
+
+## 2、入口NameSpaceHandler与DubboBeanDefinitionParser
 
 `NameSpaceHandler`和`DubboBeanDefinitionParser`是Spring标准扩展实现。可以复用此特性与Spring框架实现整合。
 

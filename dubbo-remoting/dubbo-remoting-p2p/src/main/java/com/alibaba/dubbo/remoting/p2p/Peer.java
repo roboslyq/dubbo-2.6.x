@@ -21,6 +21,7 @@ import com.alibaba.dubbo.remoting.Server;
 
 /**
  * Peer. (SPI, Prototype, ThreadSafe)
+ * 点对点
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Peer-to-peer">Peer-to-peer</a>
  */

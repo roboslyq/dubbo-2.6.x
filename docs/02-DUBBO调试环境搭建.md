@@ -1,13 +1,13 @@
 # 02-DUBBO调试环境搭建
 
-首先，提供一个[DUBBO官网]( http://dubbo.apache.org/zh-cn/docs/user/quick-start.html )地址，官网有什么详解的使用教程。
+首先，提供一个[DUBBO官网]( http://dubbo.apache.org/zh-cn/docs/user/quick-start.html )地址，官网有详解的资料，从简单的上手使用配置到框架设计及源码分析，应有尽有。所以，官网才是最详细的资料。
 
 ## 开发环境
    - JDK
    - IDEA
    - GIT
    - MAVEN
-   > 目前DUBBO使用的是Maven来构建项目，因此我们需要`Maven`
+   > 目前DUBBO使用的是Maven来构建项目，因此我们需要`Maven`。
 
 ## 源代码下载
 
@@ -23,7 +23,6 @@
 | bom              | dubbo内部相关依赖配置                                        |
 | codestyle        | 只有一个xml文件,控制编码风格                                 |
 | dependencies-bom | dubbo对外部依赖控制                                          |
-| docs             | --                                                           |
 | dubbo-cluster    | dubbo集群控制,主要包括`LoadBalance `和`Router`相关           |
 | dubbo-common     | 通用公共的工具类封装,比如线程池,序列化,并发,编译,字节等      |
 | dubbo-config     | 配置相关,主要是与Spring集成配置.通过SPI机制实现。主要有围绕生活者和消费者这两端进行配置，即ServiceConfig和ReferenceConfig. |
@@ -81,4 +80,4 @@
 ![4](./images/02/4.jpg)
 
 这表明，环境已经安装成功！！
-	
+接下来就可以断点调度，源码阅读啦。

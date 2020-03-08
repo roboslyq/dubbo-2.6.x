@@ -18,6 +18,7 @@ package com.alibaba.dubbo.common;
 
 /**
  * Resetable.
+ * 可重置的(即配置信息可以被更新)
  */
 public interface Resetable {
 
