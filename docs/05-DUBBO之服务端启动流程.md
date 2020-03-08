@@ -127,7 +127,21 @@ public class Protocol$Adaptive implements com.alibaba.dubbo.rpc.Protocol {
 }
 ```
 
+## 总结
 
+1、Spring循环调用BeanDefinitionParser解析标签，每个标签解析一次
+
+2、因此dubbo:service如果有多个，需要解析多次。每一次解析均生成一个新的`ServiceBean`来与dubbo:service配置对应。
+
+3、dubbo通过URI（Dubbo框架自定义）来导出服务，在导出服务时，会启动netty服务器(默认)。但此时会缓存当前的nettyServer。缓存的key为ip:port。因此，只有第1个dubbo:service标签才会启动服务，后续直接从缓存中获取，reset相关配置即可。
+
+4、自适应：dubbo自适应
+
+[dubbo自适应]()
+
+5、泛化调用
+
+[泛化调用]( http://dubbo.apache.org/zh-cn/docs/user/demos/generic-reference.html )
 
 # 参考资料
 
