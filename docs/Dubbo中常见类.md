@@ -1,4 +1,4 @@
-# 1、配置中心
+ProtocolFilterWrapper # 1、配置中心
 
 ## DubboNameSpaceHandler
 - DubboBeanDefinitionParser
@@ -52,8 +52,21 @@
 
 ### dubbo-rpc-api
 
-- ProtocolFilterWrapper.java
-- ProtocolListenerWrapper.java
+- `ProtocolFilterWrapper.java`
+
+> 基于扩展点自适应机制，所有的 `Protocol` 扩展点都会自动套上 `Wrapper` 类。
+>
+> 基于 `ProtocolFilterWrapper` 类，将所有 `Filter` 组装成链，在链的最后一节调用真实的引用。
+
+
+
+- `ProtocolListenerWrapper.java`
+
+> 基于扩展点自适应机制，所有的 `Protocol` 扩展点都会自动套上 `Wrapper` 类。
+>
+> 基于 `ProtocolListenerWrapper` 类，将所有 `InvokerListener` 和 `ExporterListener` 组装集合，在暴露和引用前后，进行回调。
+>
+> 包括监控在内，所有附加功能，全部通过 `Filter` 拦截实现。
 
 ### dubbo-rpc-default
 
