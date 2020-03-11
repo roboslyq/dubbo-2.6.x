@@ -23,7 +23,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
- * InvokerHandler
+ * InvokerHandler：Invoker代理类，此处的Invoke()方法会调用真正的Invoker实现
  */
 public class InvokerInvocationHandler implements InvocationHandler {
 
@@ -33,6 +33,14 @@ public class InvokerInvocationHandler implements InvocationHandler {
         this.invoker = handler;
     }
 
+    /**
+     *
+     * @param proxy 被代理对象
+     * @param method 调用方法
+     * @param args  调用参数
+     * @return
+     * @throws Throwable
+     */
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
@@ -48,7 +56,12 @@ public class InvokerInvocationHandler implements InvocationHandler {
         if ("equals".equals(methodName) && parameterTypes.length == 1) {
             return invoker.equals(args[0]);
         }
-        return invoker.invoke(new RpcInvocation(method, args)).recreate();
+        /*
+            调用invoker的方法：
+            1、创建上下文Invocation
+         */
+        return invoker.invoke(new RpcInvocation(method, args)
+            ).recreate();
     }
 
 }

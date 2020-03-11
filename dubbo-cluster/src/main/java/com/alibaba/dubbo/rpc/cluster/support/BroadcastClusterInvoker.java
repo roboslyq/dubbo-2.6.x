@@ -30,7 +30,7 @@ import java.util.List;
 
 /**
  * BroadcastClusterInvoker
- *
+ * 广播Invoker实现:即调用所有可用的Invoker,如果其中只要有一个Invoker返回异常,则抛出异常
  */
 public class BroadcastClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
@@ -46,10 +46,14 @@ public class BroadcastClusterInvoker<T> extends AbstractClusterInvoker<T> {
         RpcContext.getContext().setInvokers((List) invokers);
         RpcException exception = null;
         Result result = null;
+        /*
+          循环广播所有的Invoker
+         */
         for (Invoker<T> invoker : invokers) {
             try {
                 result = invoker.invoke(invocation);
             } catch (RpcException e) {
+                //记录异常,但暂时不抛出,继续调用剩下的Invoker.如果后续还有异常，则覆盖。
                 exception = e;
                 logger.warn(e.getMessage(), e);
             } catch (Throwable e) {
@@ -57,6 +61,7 @@ public class BroadcastClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 logger.warn(e.getMessage(), e);
             }
         }
+        //如果异常不为空，则抛出异常信息
         if (exception != null) {
             throw exception;
         }

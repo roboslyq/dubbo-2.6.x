@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * AbstractClusterInvoker
- *
+ * 负载均衡的Invoker包装
  */
 public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
 

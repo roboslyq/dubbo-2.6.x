@@ -31,7 +31,10 @@ limitations under the License.
 
     <!-- use dubbo protocol to export service on port 20880 -->
     <dubbo:protocol name="dubbo" port="20880"/>
+    <dubbo:protocol name="dubbo" port="20881"/>
 
+    <!-- dubbo provider-->
+    <dubbo:provider delay="0"></dubbo:provider>
     <!-- service implementation, as same as regular local bean -->
     <bean id="demoService" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
     <bean id="demoService1" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl1"/>

@@ -61,6 +61,11 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
         SpringExtensionFactory.addApplicationContext(applicationContext);
     }
 
+    /**
+     * 获取消费者的入口。在RefrenceBean中被调用
+     * @return 具体的代理类，即getObjectType()反回的接口类型
+     * @throws Exception
+     */
     public Object getObject() throws Exception {
         return get();
     }
@@ -73,13 +78,20 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
     public boolean isSingleton() {
         return true;
     }
-    //Spring窗口启动时，consumer的reference入口
+
+    /**
+     * 1、Spring窗口启动时，consumer的reference入口
+     * 2、因为是消费者，所以没有生产者的延迟这个概念，因此只有一个入口afterPropertiesSet()。
+     *    由于生产者ServiceBean有延迟概念，所以除了afterPropertiesSet()之外还有一个入口onApplicationEvent()
+     */
     @SuppressWarnings({"unchecked"})
     public void afterPropertiesSet() throws Exception {
-    	//如果consumer为空
+    	//consumer为消费端的全局通用的公共配置,通过<dubbo:consumer>标签进行设置。所有<dubbo:refernce>共享此配置的相关属性。
         if (getConsumer() == null) {
+            //找到当前Spring Context中已经存在的ConsumerConfig。
             Map<String, ConsumerConfig> consumerConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ConsumerConfig.class, false, false);
             if (consumerConfigMap != null && consumerConfigMap.size() > 0) {
+                //如果存在，仅允许存在一个默认的ConsumerConfig
                 ConsumerConfig consumerConfig = null;
                 for (ConsumerConfig config : consumerConfigMap.values()) {
                     if (config.isDefault() == null || config.isDefault().booleanValue()) {
@@ -175,7 +187,7 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
             b = getConsumer().isInit();
         }
         if (b != null && b.booleanValue()) {
-        	//调用父类的初始化方法，完成具体的消费者订阅
+        	//此方法调用父类的初始化方法init()，完成具体的消费者订阅
             getObject();
         }
     }

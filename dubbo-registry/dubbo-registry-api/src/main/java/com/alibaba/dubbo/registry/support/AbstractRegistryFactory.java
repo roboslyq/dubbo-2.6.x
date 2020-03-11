@@ -91,6 +91,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
                 .removeParameters(Constants.EXPORT_KEY, Constants.REFER_KEY);
         String key = url.toServiceString();
         // Lock the registry access process to ensure a single instance of the registry
+        // 锁定注册中心获取过程，保证注册中心单一实例
         LOCK.lock();
         try {
             // 访问缓存
@@ -98,7 +99,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
             if (registry != null) {
                 return registry;
             }
-            // 缓存未命中，创建 Registry 实例
+            // SPI扩展点，缓存未命中，创建 Registry 实例
             registry = createRegistry(url);
             if (registry == null) {
                 throw new IllegalStateException("Can not create registry " + url);

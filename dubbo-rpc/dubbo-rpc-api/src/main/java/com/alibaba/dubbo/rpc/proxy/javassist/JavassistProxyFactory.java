@@ -30,10 +30,15 @@ import com.alibaba.dubbo.rpc.proxy.InvokerInvocationHandler;
 public class JavassistProxyFactory extends AbstractProxyFactory {
 
     @SuppressWarnings("unchecked")
+    /**
+     * 消费端启动时，获取代理proxy对象<InvokerInvocationHandler>。
+     */
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
         return (T) Proxy.getProxy(interfaces).newInstance(new InvokerInvocationHandler(invoker));
     }
-    //Proxy工厂类，将service或refrence的ref(proxy),type(interface)及发布的注册中心URL封装为Invoker。使用了包装模式
+    /**
+     * 服务端，生成Invoker,即将service或refrence的ref(proxy),type(interface)及发布的注册中心URL封装为Invoker。使用了包装模式。
+     */
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
         // TODO Wrapper cannot handle this scenario correctly: the classname contains '$'
         // 为目标类创建 Wrapper，Wrapper 用于“包裹”目标类，Wrapper 是一个抽象类，仅可通过 getWrapper(Class) 方法创建子类

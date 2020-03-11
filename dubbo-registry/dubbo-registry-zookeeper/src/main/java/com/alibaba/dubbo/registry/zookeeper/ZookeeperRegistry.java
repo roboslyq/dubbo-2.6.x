@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * ZookeeperRegistry
- *
+ * ZK注册中心抽象
  */
 public class ZookeeperRegistry extends FailbackRegistry {
 
@@ -56,7 +56,16 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final ZookeeperClient zkClient;
 
+    /**
+     * 构造函数，创建ZkClient
+     * 1、调用了父类FailbackRegistry的构造方法：检测并连接注册中心
+     * 2、在zookeeper上创建一个ZkClient节点
+     * 3、监听该节点的RECONNECTED事
+     * @param url
+     * @param zookeeperTransporter
+     */
     public ZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
+        //调用了父类FailbackRegistry的构造方法：
         super(url);
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
@@ -66,12 +75,14 @@ public class ZookeeperRegistry extends FailbackRegistry {
             group = Constants.PATH_SEPARATOR + group;
         }
         this.root = group;
+        //在zookeeper上创建一个ZkClient节点
         zkClient = zookeeperTransporter.connect(url);
+        //监听该节点的RECONNECTED事
         zkClient.addStateListener(new StateListener() {
             public void stateChanged(int state) {
                 if (state == RECONNECTED) {
                     try {
-                        recover();
+                        recover();//节点变更，更新配置
                     } catch (Exception e) {
                         logger.error(e.getMessage(), e);
                     }
@@ -121,6 +132,11 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    /**
+     * 由发方法触发
+     * @param url
+     * @param listener
+     */
     protected void doSubscribe(final URL url, final NotifyListener listener) {
         try {
             if (Constants.ANY_VALUE.equals(url.getServiceInterface())) {
@@ -146,6 +162,10 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     });
                     zkListener = listeners.get(listener);
                 }
+                //在zookeeper中创建监听的节点,主要创建以下相关节点:
+                // /dubbo/dubbo.common.hello.service.HelloService/providers/
+                // /dubbo/dubbo.common.hello.service.HelloService/configurators/
+                // /dubbo/dubbo.common.hello.service.HelloService/routers/
                 zkClient.create(root, false);
                 List<String> services = zkClient.addChildListener(root, zkListener);
                 if (services != null && !services.isEmpty()) {
@@ -156,7 +176,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                                 Constants.CHECK_KEY, String.valueOf(false)), listener);
                     }
                 }
-            } else {
+            } else {//正常情况进入此分支
                 List<URL> urls = new ArrayList<URL>();
                 for (String path : toCategoriesPath(url)) {
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
@@ -179,6 +199,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
                     }
                 }
+                //===>创建成功,发起通知,会更新订阅者的configurators,routers和invokers
                 notify(url, listener, urls);
             }
         } catch (Throwable e) {

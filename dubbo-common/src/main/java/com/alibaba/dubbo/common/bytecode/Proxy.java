@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Proxy.
+ * 所有服务提供者/消费者的代理类的父类
  */
 
 public abstract class Proxy {
@@ -48,8 +49,17 @@ public abstract class Proxy {
             throw new UnsupportedOperationException("Method [" + ReflectUtils.getName(method) + "] unimplemented.");
         }
     };
+    /**
+     * 代理类总个数计数器
+     */
     private static final AtomicLong PROXY_CLASS_COUNTER = new AtomicLong(0);
+    /**
+     * 代理类包名
+     */
     private static final String PACKAGE_NAME = Proxy.class.getPackage().getName();
+    /**
+     * 代理类缓存:使用WeakHashMap
+     */
     private static final Map<ClassLoader, Map<String, Object>> ProxyCacheMap = new WeakHashMap<ClassLoader, Map<String, Object>>();
 
     private static final Object PendingGenerationMarker = new Object();
@@ -86,10 +96,11 @@ public abstract class Proxy {
 
             Class<?> tmp = null;
             try {
+                //测试被代理类是否能够正常加载。
                 tmp = Class.forName(itf, false, cl);
             } catch (ClassNotFoundException e) {
             }
-
+            //不能正常加载，抛出异常
             if (tmp != ics[i])
                 throw new IllegalArgumentException(ics[i] + " is not visible from class loader");
 
@@ -100,6 +111,7 @@ public abstract class Proxy {
         String key = sb.toString();
 
         // get cache by class loader. first time ProxyCacheMap is {}
+        // 从缓存中获取
         Map<String, Object> cache;
         synchronized (ProxyCacheMap) {
             cache = ProxyCacheMap.get(cl);
@@ -153,7 +165,10 @@ public abstract class Proxy {
                     }
                 }
                 ccp.addInterface(ics[i]);
-                //[interface com.alibaba.dubbo.demo.DemoService, interface com.alibaba.dubbo.rpc.service.EchoService]
+                /*
+                 *ics = [interface com.alibaba.dubbo.demo.DemoService
+                 *       , interface com.alibaba.dubbo.rpc.service.EchoService]
+                 */
                 for (Method method : ics[i].getMethods()) {
                     String desc = ReflectUtils.getDesc(method);
                     if (worked.contains(desc))
@@ -170,8 +185,8 @@ public abstract class Proxy {
                     code.append(" Object ret = handler.invoke(this, methods[" + ix + "], args);");
                     if (!Void.TYPE.equals(rt))
                         code.append(" return ").append(asArgument(rt, "ret")).append(";");
-                    //method is :public abstract java.lang.String com.alibaba.dubbo.demo.DemoService.sayHello(java.lang.String)
-                    //public abstract java.lang.Object com.alibaba.dubbo.rpc.service.EchoService.$echo(java.lang.Object)
+                    //method = “public abstract java.lang.String com.alibaba.dubbo.demo.DemoService.sayHello(java.lang.String)”
+                    //method = “public abstract java.lang.Object com.alibaba.dubbo.rpc.service.EchoService.$echo(java.lang.Object)”
                     methods.add(method);
                     ccp.addMethod(method.getName(), method.getModifiers(), rt, pts, method.getExceptionTypes(), code.toString());
                 }

@@ -388,17 +388,25 @@ public class DubboProtocol extends AbstractProtocol {
         // 获得远程通信客户端数组
         // 创建 DubboInvoker 对象
         // create rpc invoker.
+        // getClients(url)返回的是服务提供者的连接列表
         DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
         // 添加到 `invokers`
         invokers.add(invoker);
         return invoker;
     }
-    
+
+    /**
+     *
+     * @param url  ExchangeClient[]类型，初始化由initClient(url)方法创建，默认的底层连接实现是通过Netty的
+     * @return
+     */
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
+        //是否共享连接
         boolean service_share_connect = false;
         int connections = url.getParameter(Constants.CONNECTIONS_KEY, 0);
         // if not configured, connection is shared, otherwise, one connection for one service
+        //如果connections不配置，则共享连接，否则每服务每连接
         if (connections == 0) {
             service_share_connect = true;
             connections = 1;
@@ -409,6 +417,7 @@ public class DubboProtocol extends AbstractProtocol {
             if (service_share_connect) {
                 clients[i] = getSharedClient(url);
             } else {
+                //对clients进行初始化
                 clients[i] = initClient(url);
             }
         }

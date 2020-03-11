@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * AvailableCluster
- *
+ * 可用负载模式：永远远程第1个可以用的Invoker
  */
 public class AvailableCluster implements Cluster {
 
@@ -38,6 +38,9 @@ public class AvailableCluster implements Cluster {
 
         return new AbstractClusterInvoker<T>(directory) {
             public Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
+                /*
+                 * 循环遍列invokers，选第1个可以用的Invoker
+                 */
                 for (Invoker<T> invoker : invokers) {
                     if (invoker.isAvailable()) {
                         return invoker.invoke(invocation);

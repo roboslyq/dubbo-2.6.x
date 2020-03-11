@@ -29,12 +29,22 @@ import com.alibaba.dubbo.rpc.cluster.support.FailoverCluster;
  * <a href="http://en.wikipedia.org/wiki/Fault-tolerant_system">Fault-Tolerant</a>
  *
  */
+//默认是FailoverCluster
 @SPI(FailoverCluster.NAME)
 public interface Cluster {
 
     /**
      * Merge the directory invokers to a virtual invoker.
-     *
+     * Join方法并不是返回一个List,而是一个新的Invoker，新的Invoker常见的有如下几类：
+     *  AvailableCluster
+     *  BroadcastCluster
+     *  FailbackCluster
+     *  FailfastCluster
+     *  FailoverCluster
+     *  FailsafeCluster
+     *  ForkingCluster
+     *  MergeableCluster
+     *  MockClusterWrapper
      * @param <T>
      * @param directory
      * @return cluster invoker

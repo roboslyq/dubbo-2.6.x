@@ -81,8 +81,11 @@ public abstract class AbstractRegistry implements Registry {
     public AbstractRegistry(URL url) {
         setUrl(url);
         // Start file save timer
+        // 启动文件保存定时器
         syncSaveFile = url.getParameter(Constants.REGISTRY_FILESAVE_SYNC_KEY, false);
-        String filename = url.getParameter(Constants.FILE_KEY, System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + url.getParameter(Constants.APPLICATION_KEY) + "-" + url.getAddress() + ".cache");
+        //System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + url.getHost() + ".cache":用户本地目录加载缓存的文件到properties中
+        String filename = url.getParameter(Constants.FILE_KEY
+                , System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + url.getParameter(Constants.APPLICATION_KEY) + "-" + url.getAddress() + ".cache");
         File file = null;
         if (ConfigUtils.isNotEmpty(filename)) {
             file = new File(filename);
@@ -94,6 +97,7 @@ public abstract class AbstractRegistry implements Registry {
         }
         this.file = file;
         loadProperties();
+        //调用了notify(List<URL> urls)方法
         notify(url.getBackupUrls());
     }
 
@@ -344,6 +348,10 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    /**
+     * 观察者模式，当服务变更时，通过getSubscribed()方法获取订阅者列表，并通知所有的订阅者更新。
+     * @param urls
+     */
     protected void notify(List<URL> urls) {
         if (urls == null || urls.isEmpty()) return;
 
@@ -367,6 +375,12 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    /**
+     * 订阅成功后发起通知
+     * @param url
+     * @param listener
+     * @param urls
+     */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
             throw new IllegalArgumentException("notify url == null");
@@ -407,6 +421,7 @@ public abstract class AbstractRegistry implements Registry {
             List<URL> categoryList = entry.getValue();
             categoryNotified.put(category, categoryList);
             saveProperties(url);
+            //通知监听器:具体的Listener是RegistryDirectory
             listener.notify(categoryList);
         }
     }

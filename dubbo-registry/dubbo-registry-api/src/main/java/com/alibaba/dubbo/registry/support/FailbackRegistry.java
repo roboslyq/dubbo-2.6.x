@@ -60,12 +60,20 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     private AtomicBoolean destroyed = new AtomicBoolean(false);
 
+    /**
+     * 1、调用父类AbstractRegistry的构造方法
+     * 2、启用了一个线程池来定时重建与注册中心的连接
+     * @param url
+     */
     public FailbackRegistry(URL url) {
+        //调用父类AbstractRegistry的构造方法
         super(url);
         int retryPeriod = url.getParameter(Constants.REGISTRY_RETRY_PERIOD_KEY, Constants.DEFAULT_REGISTRY_RETRY_PERIOD);
+       //定时器
         this.retryFuture = retryExecutor.scheduleWithFixedDelay(new Runnable() {
             public void run() {
                 // Check and connect to the registry
+                // 检测并连接注册中心
                 try {
                     retry();
                 } catch (Throwable t) { // Defensive fault tolerance
@@ -189,15 +197,22 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
+    /**
+     * 消费端启动时，进行服务订阅
+     * @param url
+     * @param listener 正常情况是RegistryDirectory（此接口实现了NotifyListener）
+     */
     @Override
     public void subscribe(URL url, NotifyListener listener) {
         if (destroyed.get()){
             return;
         }
+        //调用父方法,进行一些缓存处理
         super.subscribe(url, listener);
         removeFailedSubscribed(url, listener);
         try {
-            // Sending a subscription request to the server side
+           // Sending a subscription request to the server side
+           // 向服务器端发送订阅请求
             doSubscribe(url, listener);
         } catch (Exception e) {
             Throwable t = e;
@@ -208,20 +223,24 @@ public abstract class FailbackRegistry extends AbstractRegistry {
                 logger.error("Failed to subscribe " + url + ", Using cached list: " + urls + " from cache file: " + getUrl().getParameter(Constants.FILE_KEY, System.getProperty("user.home") + "/dubbo-registry-" + url.getHost() + ".cache") + ", cause: " + t.getMessage(), t);
             } else {
                 // If the startup detection is opened, the Exception is thrown directly.
+                // 是否启动时检测订阅状态
                 boolean check = getUrl().getParameter(Constants.CHECK_KEY, true)
                         && url.getParameter(Constants.CHECK_KEY, true);
                 boolean skipFailback = t instanceof SkipFailbackWrapperException;
+                //如果开启了启动时检测，启动订阅失败时，则直接抛出异常
                 if (check || skipFailback) {
                     if (skipFailback) {
                         t = t.getCause();
                     }
                     throw new IllegalStateException("Failed to subscribe " + url + ", cause: " + t.getMessage(), t);
                 } else {
+                    //如果开启了未开启启动时检测，启动订阅失败时，仅打印日志
                     logger.error("Failed to subscribe " + url + ", waiting for retry, cause: " + t.getMessage(), t);
                 }
             }
 
             // Record a failed registration request to a failed list, retry regularly
+            // 启动订阅失败后，不断重试订阅
             addFailedSubscribed(url, listener);
         }
     }
@@ -262,6 +281,12 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
+    /**
+     * 订阅成功,发起通知
+     * @param url
+     * @param listener
+     * @param urls
+     */
     @Override
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
@@ -271,6 +296,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             throw new IllegalArgumentException("notify listener == null");
         }
         try {
+            //发起通知
             doNotify(url, listener, urls);
         } catch (Exception t) {
             // Record a failed registration request to a failed list, retry regularly
@@ -284,10 +310,20 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
+    /**
+     * ===>更新configurators和routers，然后调用refreshInvoker(invokerUrls)，这个方法用于更新服务提供者相关的invoker
+     * @param url
+     * @param listener
+     * @param urls
+     */
     protected void doNotify(URL url, NotifyListener listener, List<URL> urls) {
         super.notify(url, listener, urls);
     }
 
+    /**
+     * 服务配置更新
+     * @throws Exception
+     */
     @Override
     protected void recover() throws Exception {
         // register

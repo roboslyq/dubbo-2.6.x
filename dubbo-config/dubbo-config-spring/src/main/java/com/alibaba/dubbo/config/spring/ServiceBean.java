@@ -133,7 +133,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     }
     //bean是否延迟加截
     private boolean isDelay() {
+        //若当前Service单独配置了delay,则以当前Service配置的Delay为准，否则继续判断Provider的公共配置：providerConfig
         Integer delay = getDelay();
+        //获取Provider全局通用配置
         ProviderConfig provider = getProvider();
         if (delay == null && provider != null) {
             delay = provider.getDelay();

@@ -64,11 +64,21 @@ import static com.alibaba.dubbo.common.utils.NetUtils.isInvalidLocalHost;
 public class ReferenceConfig<T> extends AbstractReferenceConfig {
 
     private static final long serialVersionUID = -5864351140409987595L;
-
+    /**
+     *Dubbo的SPI机制， 一个自适应扩展扩展点，正常情况返回Protocol$Adaptive
+     */
     private static final Protocol refprotocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
-
+    /**
+     * Dubbo的SPI机制， 一个自适应扩展扩展点，正常情况返回Cluster$Adaptive
+     */
     private static final Cluster cluster = ExtensionLoader.getExtensionLoader(Cluster.class).getAdaptiveExtension();
-
+    /**
+     * 自适应扩展点《META-INF/dubbo/internal/com.alibaba.dubbo.rpc.ProxyFactory》：
+     * stub=com.alibaba.dubbo.rpc.proxy.wrapper.StubProxyFactoryWrapper
+     * jdk=com.alibaba.dubbo.rpc.proxy.jdk.JdkProxyFactory
+     * javassist=com.alibaba.dubbo.rpc.proxy.javassist.JavassistProxyFactory
+     *
+     */
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
     private final List<URL> urls = new ArrayList<URL>();
     // interface name
@@ -177,7 +187,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (destroyed) {
             throw new IllegalStateException("Already destroyed!");
         }
-        // 初始化
+        // 初始化==>核心入口
         if (ref == null) {
             init();
         }
@@ -216,11 +226,14 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         checkDefault();
         // 拼接属性配置（环境变量 + properties 属性）到 ReferenceConfig 对象
         appendProperties(this);
-        // 若未设置 `generic` 属性，使用 `ConsumerConfig.generic` 属性。
+        /*
+         * 1、Generic具体意义请见`ServiceBean`中的注解。
+         * 2、若设置当前<dubbo:reference>设置了`generic` 属性，或者未设置但 <dubbo:consumer>设置了generic属性。
+          */
         if (getGeneric() == null && getConsumer() != null) {//【TODO 8002】，不只 true / false ，还有 bean 、 nativejava
             setGeneric(getConsumer().getGeneric());
         }
-        // 泛化接口的实现
+        // 泛化接口的实现《加载相关的接口》
         if (ProtocolUtils.isGeneric(getGeneric())) {
             interfaceClass = GenericService.class;
         } else { // 普通接口的实现
@@ -233,7 +246,15 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             // 校验接口和方法
             checkInterfaceAndMethods(interfaceClass, methods);
         }
-        // 直连提供者，参见文档《直连提供者》https://dubbo.gitbooks.io/dubbo-user-book/demos/explicit-target.html
+        /*
+         * 1、直连提供者，参见文档《直连提供者》https://dubbo.gitbooks.io/dubbo-user-book/demos/explicit-target.html
+         * 2、当线上需求服务是peer-to-peer(点对点)时，可以采用直连模式。
+         * 3、直连模式一共有三种：
+         *      (1)<dubbo:reference>中直接配置url属性，此时可以绕过注册中心。比如<dubbo:reference id="xxxService" interface="com.alibaba.xxx.XxxService" url="dubbo://localhost:20890"/>
+         *     （2）在JVM启动参数中加入-D参数映射服务地址,key为服务名，value为服务提供者url。java -Dcom.alibaba.xxx.XxxService=dubbo://localhost:20890
+         *      (3) 使用配置文件resolve.properties作映射，此种情况针对点对点服务较多时。默认文件名为dubbo-resolve.properties。
+         *          然后在映射文件xxx.properties中加入：(key为服务名，value为服务提供者url) com.alibaba.xxx.XxxService=dubbo://localhost:20890
+         */
         // 【直连提供者】第一优先级，通过 -D 参数指定 ，例如 java -Dcom.alibaba.xxx.XxxService=dubbo://localhost:20890
         String resolve = System.getProperty(interfaceName);
         String resolveFile = null;
@@ -277,7 +298,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 }
             }
         }
-        // 从 ConsumerConfig 对象中，读取 application、module、registries、monitor 配置对象。
+        // 从通用配置ConsumerConfig 对象中，读取 application、module、registries、monitor 配置对象。
         if (consumer != null) {
             if (application == null) {
                 application = consumer.getApplication();
@@ -376,18 +397,40 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         // 添加到 StaticContext 进行缓存
         //attributes are stored by system context.
         StaticContext.getSystemContext().putAll(attributes);
+
         //创建reference具体代理类
         ref = createProxy(map);
-        //
+
+        //ConsumerModel是对ReferenceConfig配置和代理类proxy的完整的包装。
         ConsumerModel consumerModel = new ConsumerModel(getUniqueServiceName(), this, ref, interfaceClass.getMethods());
+        // 将当前的consumerModel加载到ApplicationModel中的consumedServices缓存中：consumedServices是一个Map
         ApplicationModel.initConsumerModel(getUniqueServiceName(), consumerModel);
     }
-    //创建reference具体代理类
+
+
+    /**
+     *核心方法：创建reference具体代理类
+     * 1、从注册中心拉取信息，解析出Invoker
+     * 2、如果有多个服务提供者，通过Cluster#join()包装得到最终一个Invoker
+     * 3、使用ProxyFactory#getProxy(invoker)得到Invoker代理类，供具体的业务代码调用。
+     */
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
-    	/**temp://localhost?application=demo-consumer&check=false&dubbo=2.0.0&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=2508&qos.port=33333&register.ip=192.168.0.100&side=consumer&timestamp=1523286869360 **/
+    	/* 创建tmpUrl,其具体内容大概如下：
+    	 *   temp://localhost?
+    	 *   application=demo-consumer
+    	 *   &check=false
+    	 *   &dubbo=2.0.0
+    	 *   &interface=com.alibaba.dubbo.demo.DemoService
+    	 *   &methods=sayHello
+    	 *   &pid=2508
+    	 *   &qos.port=33333
+    	 *   &register.ip=192.168.0.100
+    	 *   &side=consumer
+    	 *   &timestamp=1523286869360
+    	 */
         URL tmpUrl = new URL("temp", "localhost", 0, map);
-        //判断是否是当前JVM调用
+        //判断是否是当前JVM调用<本地服务引用>
         final boolean isJvmRefer;
         if (isInjvm() == null) {
             if (url != null && url.length() > 0) { // if a url is specified, don't do local reference
@@ -440,20 +483,44 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                     throw new IllegalStateException("No such any registry to reference " + interfaceName + " on the consumer " + NetUtils.getLocalHost() + " use dubbo version " + Version.getVersion() + ", please config <dubbo:registry address=\"...\" /> to your spring config.");
                 }
             }
-
+            /*
+             *单机或者集群的服务引用的核心方法： refprotocol.refer()
+             */
+            //单机片版，非集群
             if (urls.size() == 1) {
             	//interfaceClass ="interface com.alibaba.dubbo.demo.DemoService"
             	//urls.get(0)=[registry://224.5.6.7:1234/com.alibaba.dubbo.registry.RegistryService?application=demo-consumer&dubbo=2.0.0&pid=15628&qos.port=33333&refer=application%3Ddemo-consumer%26check%3Dfalse%26dubbo%3D2.0.0%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D15628%26qos.port%3D33333%26register.ip%3D192.168.0.100%26side%3Dconsumer%26timestamp%3D1523288101657&registry=multicast&timestamp=1523288101705]
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             } else {
+
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {
-                    invokers.add(refprotocol.refer(interfaceClass, url));
+                    /*
+                     * 1、多机版，多个服务提供者，需要做Cluster集群处理
+                     * 2、消费端启动的核心流程，通过具体的Protocol{比如：RegistryProtocol}将URL转换成对应的Invoker。
+                     * 3、转换成Invoker之后，将其加入到invokers数组中
+                     */
+                    invokers.add(
+                            refprotocol.refer(interfaceClass, url)//服务引用，返回一个Invoker
+                    );
                     if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                         registryURL = url; // use last registry url
                     }
                 }
+                /*
+                 * cluster为一个自适应扩展点，将多个原始的Invoker包装为一个Invoker，包装后的Invoker类型有如下实现：
+                 *      AvailableCluster
+                 *      BroadcastCluster
+                 *      FailbackCluster
+                 *      FailfastCluster
+                 *      FailoverCluster
+                 *      FailsafeCluster
+                 *      ForkingCluster
+                 *      MergeableCluster
+                 *      MockClusterWrapper
+                 * 可以通过包装后的Invoker实现LoadBalance功能 。
+                 */
                 if (registryURL != null) { // registry url is available
                     // use AvailableCluster only when register's cluster is available
                     URL u = registryURL.addParameter(Constants.CLUSTER_KEY, AvailableCluster.NAME);

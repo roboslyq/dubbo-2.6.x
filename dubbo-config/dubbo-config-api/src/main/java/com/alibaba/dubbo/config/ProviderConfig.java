@@ -29,7 +29,7 @@ import java.util.Arrays;
 
 /**
  * ProviderConfig
- *
+ * 为<dubbo:service>即服务提供者提供公共的参数配置。
  * @export
  * @see com.alibaba.dubbo.config.ProtocolConfig
  * @see com.alibaba.dubbo.config.ServiceConfig

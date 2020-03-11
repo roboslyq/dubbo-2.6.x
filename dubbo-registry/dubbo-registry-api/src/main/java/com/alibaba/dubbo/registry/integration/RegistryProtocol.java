@@ -127,7 +127,8 @@ public class RegistryProtocol implements Protocol {
         registry.register(registedProviderUrl);
     }
     /**
-     * 服务发布过程，入口为ServiceConfig.doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) 中的
+     * 服务端服务发布流程：将invoker转换成Exporter
+     *  入口为ServiceConfig.doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) 中的
     	Exporter<?> exporter = protocol.export(wrapperInvoker);触发。
          主要做如下一些操作：
          1、调用 doLocalExport 导出服务<即启动服务，让服务可用>
@@ -311,10 +312,33 @@ public class RegistryProtocol implements Protocol {
         return key;
     }
 
+    /**
+     * 消费端订阅服务入口：将URL转换成Invoker
+     * @param type Service class
+     * @param url  URL address for the remote service
+     * @param <T>
+     * @return
+     * @throws RpcException
+     */
     @SuppressWarnings("unchecked")
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
+        /*
+         * 剔除Registry协议，得到具体的注册中心协议，如zookeeper://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService
+         *      ?application=demo-consumer
+         *      &backup=39.104.184.69:2181,39.104.184.69:2181
+         *      &dubbo=2.0.0
+         *      &pid=1428
+         *      &qos.port=33333
+         *      &refer=application%3Ddemo-consumer%26check%3Dfalse%26dubbo%3D2.0.0%26group%3Db%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D1428%26qos.port%3D33333%26register.ip%3D192.168.1.108%26revision%3D0.0.1%26side%3Dconsumer%26timestamp%3D1583846516103%26version%3D0.0.1&timestamp=1583846516163
+         */
         url = url.setProtocol(url.getParameter(Constants.REGISTRY_KEY, Constants.DEFAULT_REGISTRY)).removeParameter(Constants.REGISTRY_KEY);
+        /*
+         * 获取注册中心
+         * 1、以此处发起注册中心连接,此处getRegistry方法属于AbstractRegistryFactory类
+         * 2、创建监听，更新订阅者
+         */
         Registry registry = registryFactory.getRegistry(url);
+        //如果type为注册中心(正常业务服务不会进入此分支)
         if (RegistryService.class.equals(type)) {
             return proxyFactory.getInvoker((T) registry, type, url);
         }
@@ -328,6 +352,7 @@ public class RegistryProtocol implements Protocol {
                 return doRefer(getMergeableCluster(), registry, type, url);
             }
         }
+        //获取Invoker
         return doRefer(cluster, registry, type, url);
     }
 
@@ -335,23 +360,39 @@ public class RegistryProtocol implements Protocol {
         return ExtensionLoader.getExtensionLoader(Cluster.class).getExtension("mergeable");
     }
 
+    /**
+     *
+     * @param cluster   Cluster$Adaptive
+     * @param registry  如果使用zk,则是ZookeeperRegistry,其相关参数为：zookeeper://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-consumer&backup=39.104.184.69:2181,39.104.184.69:2181&dubbo=2.0.0&interface=com.alibaba.dubbo.registry.RegistryService&pid=1428&qos.port=33333&timestamp=1583846516163
+     * @param type  interface com.alibaba.dubbo.demo.DemoService
+     * @param url   zookeeper://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-consumer&backup=39.104.184.69:2181,39.104.184.69:2181&dubbo=2.0.0&pid=1428&qos.port=33333&refer=application%3Ddemo-consumer%26check%3Dfalse%26dubbo%3D2.0.0%26group%3Db%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D1428%26qos.port%3D33333%26register.ip%3D192.168.1.108%26revision%3D0.0.1%26side%3Dconsumer%26timestamp%3D1583846516103%26version%3D0.0.1&timestamp=1583846516163
+     * @param <T>
+     * @return
+     */
     private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
+        /**
+         * 根据class type 和 url 创建 Directory服务。
+         */
         RegistryDirectory<T> directory = new RegistryDirectory<T>(type, url);
+        //设置Directory的注册中心：ZookeeperRegistry等，具体注册中心由实际情况而定
         directory.setRegistry(registry);
+        //protocol是一个Adaptive
         directory.setProtocol(protocol);
         // all attributes of REFER_KEY
         Map<String, String> parameters = new HashMap<String, String>(directory.getUrl().getParameters());
         URL subscribeUrl = new URL(Constants.CONSUMER_PROTOCOL, parameters.remove(Constants.REGISTER_IP_KEY), 0, type.getName(), parameters);
         if (!Constants.ANY_VALUE.equals(url.getServiceInterface())
                 && url.getParameter(Constants.REGISTER_KEY, true)) {
+            //向注册中心注册Consumer信息
             registry.register(subscribeUrl.addParameters(Constants.CATEGORY_KEY, Constants.CONSUMERS_CATEGORY,
                     Constants.CHECK_KEY, String.valueOf(false)));
         }
+        //订阅服务==>向注册中心发起订阅，
         directory.subscribe(subscribeUrl.addParameter(Constants.CATEGORY_KEY,
                 Constants.PROVIDERS_CATEGORY
                         + "," + Constants.CONFIGURATORS_CATEGORY
                         + "," + Constants.ROUTERS_CATEGORY));
-
+        //通过Cluster将Directory包装成各种门面Invoker,比如FailfastClusterInvoker,FailoverClusterInvoker,FailSafeClusterInvoker等各种门面Invoker.
         Invoker invoker = cluster.join(directory);
         ProviderConsumerRegTable.registerConsuemr(invoker, url, subscribeUrl, directory);
         return invoker;
