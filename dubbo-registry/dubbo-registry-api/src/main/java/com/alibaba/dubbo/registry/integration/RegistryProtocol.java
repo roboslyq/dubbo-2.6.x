@@ -380,19 +380,41 @@ public class RegistryProtocol implements Protocol {
         directory.setProtocol(protocol);
         // all attributes of REFER_KEY
         Map<String, String> parameters = new HashMap<String, String>(directory.getUrl().getParameters());
+        /*
+         * subscribeUrl = consumer://192.168.1.108/com.alibaba.dubbo.demo.DemoService
+         *                  ?application=demo-consumer
+         *                  &check=false
+         *                  &dubbo=2.0.0
+         *                  &group=b
+         *                  &interface=com.alibaba.dubbo.demo.DemoService
+         *                  &methods=sayHello
+         *                  &pid=10208
+         *                  &qos.port=33333
+         *                  &revision=0.0.1
+         *                  &side=consumer
+         *                  &timestamp=1583940691483&
+         *                  version=0.0.1
+         */
         URL subscribeUrl = new URL(Constants.CONSUMER_PROTOCOL, parameters.remove(Constants.REGISTER_IP_KEY), 0, type.getName(), parameters);
         if (!Constants.ANY_VALUE.equals(url.getServiceInterface())
                 && url.getParameter(Constants.REGISTER_KEY, true)) {
-            //向注册中心注册Consumer信息
+            /*
+             * 向注册中心注册Consumer信息,默认实现是ZookeeperRegistry
+             */
             registry.register(subscribeUrl.addParameters(Constants.CATEGORY_KEY, Constants.CONSUMERS_CATEGORY,
                     Constants.CHECK_KEY, String.valueOf(false)));
         }
-        //订阅服务==>向注册中心发起订阅，
+        /*
+         * 核心方法==>订阅服务,向注册中心发起订阅，并将URL转换成Invoker
+         */
         directory.subscribe(subscribeUrl.addParameter(Constants.CATEGORY_KEY,
                 Constants.PROVIDERS_CATEGORY
                         + "," + Constants.CONFIGURATORS_CATEGORY
                         + "," + Constants.ROUTERS_CATEGORY));
-        //通过Cluster将Directory包装成各种门面Invoker,比如FailfastClusterInvoker,FailoverClusterInvoker,FailSafeClusterInvoker等各种门面Invoker.
+        /*
+         * 通过Cluster将Directory包装成各种门面Invoker,比如FailfastClusterInvoker,FailoverClusterInvoker
+         * ,FailSafeClusterInvoker等各种门面Invoker.
+         */
         Invoker invoker = cluster.join(directory);
         ProviderConsumerRegTable.registerConsuemr(invoker, url, subscribeUrl, directory);
         return invoker;

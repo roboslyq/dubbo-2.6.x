@@ -38,8 +38,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * ReferenceFactoryBean
- * 消费者初始化入口Bean,详情见DubboNamespaceHandler。因继承InitializingBean及ApplicationContextAware，故在spring启动过程可进入相应方法
+ * 1、基于Spring schema的扩展机制
+ * 2、ReferenceFactoryBean,是消费者初始化入口Bean,详情见DubboNamespaceHandler。
+ * 因继承InitializingBean及ApplicationContextAware，故在spring启动过程可进入相应方法。
  * @export
  */
 public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean, ApplicationContextAware, InitializingBean, DisposableBean {
@@ -125,7 +126,7 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
                 }
             }
         }
-        //对模式进行处理
+        //对模块信息进行处理，可选。
         if (getModule() == null
                 && (getConsumer() == null || getConsumer().getModule() == null)) {
             Map<String, ModuleConfig> moduleConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ModuleConfig.class, false, false);

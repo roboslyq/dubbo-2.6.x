@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 
 /**
  * Provide helpful information for {@link ExtensionLoader} to inject dependency extension instance.
- *
+ * 自适应注解: 作用在Methods的方法上,从URL中提供相关参数,然后激活相应的方法。例如Transporter.java类。最终会生成Transporter$Adaptive类实例。
  * @see ExtensionLoader
  * @see URL
  */

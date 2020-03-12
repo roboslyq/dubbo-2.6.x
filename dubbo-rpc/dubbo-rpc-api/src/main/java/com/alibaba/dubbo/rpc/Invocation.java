@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Invocation. (API, Prototype, NonThreadSafe)
- *
+ * RPC调用上下文环境
  * @serial Don't change the class name and package name.
  * @see com.alibaba.dubbo.rpc.Invoker#invoke(Invocation)
  * @see com.alibaba.dubbo.rpc.RpcInvocation
@@ -29,7 +29,7 @@ public interface Invocation {
 
     /**
      * get method name.
-     *
+     * 方法名称
      * @return method name.
      * @serial
      */
@@ -37,7 +37,7 @@ public interface Invocation {
 
     /**
      * get parameter types.
-     *
+     * 参数类型列表
      * @return parameter types.
      * @serial
      */
@@ -45,7 +45,7 @@ public interface Invocation {
 
     /**
      * get arguments.
-     *
+     * 参数值列表
      * @return arguments.
      * @serial
      */
@@ -53,7 +53,7 @@ public interface Invocation {
 
     /**
      * get attachments.
-     *
+     * 附加参数k-v形式
      * @return attachments.
      * @serial
      */
@@ -61,7 +61,7 @@ public interface Invocation {
 
     /**
      * get attachment by key.
-     *
+     * 附加参数k
      * @return attachment value.
      * @serial
      */
@@ -69,7 +69,7 @@ public interface Invocation {
 
     /**
      * get attachment by key with default value.
-     *
+     * 获取附加参数值，并且可以设置默认值
      * @return attachment value.
      * @serial
      */
@@ -77,7 +77,7 @@ public interface Invocation {
 
     /**
      * get the invoker in current context.
-     *
+     * 获取具体的Invoker
      * @return invoker.
      * @transient
      */

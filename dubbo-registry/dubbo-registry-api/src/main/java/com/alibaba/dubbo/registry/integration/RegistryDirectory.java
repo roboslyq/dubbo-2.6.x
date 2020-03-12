@@ -238,7 +238,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                 this.overrideDirectoryUrl = configurator.configure(overrideDirectoryUrl);
             }
         }
-        // providers 更新Provider信息
+        /*
+         * providers 更新Provider信息，将URL信息转换成Invoker
+         */
         refreshInvoker(invokerUrls);
     }
 
@@ -274,6 +276,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
              * 核心方法===> 将URL列表转成Invoker列表
              */
             Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map  将URL列表转成Invoker列表
+
             Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // Change method name to map Invoker Map  换方法名映射Invoker列表
             // state change
             // If the calculation is wrong, it is not processed.
@@ -414,7 +417,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         /*
                          * 核心方法===> 根据SPI机制创建protocol，此处正常情况为dubboProtocol。
                          */
-                        invoker = new InvokerDelegate<T>(protocol.refer(serviceType, url) //自适应协议，最终该refer方法会由DubboProtocol实现
+                        invoker = new InvokerDelegate<T>(
+                                //自适应协议，最终该refer方法会由DubboProtocol实现
+                                protocol.refer(serviceType, url)
                                 , url
                                 , providerUrl);
                     }

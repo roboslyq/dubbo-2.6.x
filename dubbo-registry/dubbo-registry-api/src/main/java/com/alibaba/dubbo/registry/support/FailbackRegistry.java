@@ -131,6 +131,10 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
+    /**
+     * 向注册中心注册URL，包括
+     * @param url
+     */
     @Override
     public void register(URL url) {
         if (destroyed.get()){

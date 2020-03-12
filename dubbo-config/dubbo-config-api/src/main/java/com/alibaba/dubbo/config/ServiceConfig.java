@@ -443,11 +443,11 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 throw new IllegalStateException("The local implementation class " + localClass.getName() + " not implement interface " + interfaceName);
             }
         }
-        // 处理服务接口客户端本地代理( `stub` )相关
-        //dubbo的本地存根的原理是：远程服务后，客户端通常只剩下接口，而实现全在服务器端，但提供方有些时候想在客户端也执行部分逻辑，那么
+        // 处理服务接口客户端本地代理( `stub`-存根 )相关，其实相当于Spring AOP中的Round Advice：环绕通知（即前后拦截）
+        // dubbo的本地存根的原理是：远程服务后，客户端通常只剩下接口，而实现全在服务器端，但提供方有些时候想在客户端也执行部分逻辑，那么
         // 就在服务消费者这一端提供了一个Stub类，然后当消费者调用provider方提供的dubbo服务时，客户端生成 Proxy 实例，这个Proxy实例就是我们正常调用dubbo
         // 远程服务要生成的代理实例，然后消费者这方会把 Proxy 通过构造函数传给 消费者方的Stub ，然后把 Stub 暴露给用户，Stub 可以决定要不要去调 Proxy。
-        // 会通过代理类去完成这个调用，这样在Stub类中，就可以做一些额外的事，来对服务的调用过程进行优化或者容错的处理。附图：
+        // 会通过代理类去完成这个调用，这样在Stub类中，就可以做一些额外的事，来对服务的调用过程进行优化或者容错的处理。
         if (stub != null) {
             // 设为 true，表示使用缺省代理类名，即：接口名 + Stub 后缀
             if ("true".equals(stub)) {
@@ -676,8 +676,11 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if ((contextPath == null || contextPath.length() == 0) && provider != null) {
             contextPath = provider.getContextpath();
         }
-        //    获取 host 和 port
-        //192.168.43.57。对发布的服务IP过行处理，比如多网卡等
+        /*
+         * 1、获取 host 和 port,对发布的服务IP过行处理，比如多网卡等
+         * 2、主要是调用NetUtils类实现
+         * 得到host结果可能是：192.168.43.57
+         */
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         //20880
         Integer port = this.findConfigedPorts(protocolConfig, name, map);

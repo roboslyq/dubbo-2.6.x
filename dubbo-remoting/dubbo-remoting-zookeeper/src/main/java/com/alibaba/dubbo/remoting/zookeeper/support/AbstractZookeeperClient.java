@@ -49,10 +49,16 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
         return url;
     }
 
+    /**
+     * 向注册中心增加节点
+     * @param path zk节点中的路径：/dubbo/com.alibaba.dubbo.demo.DemoService/consumers/consumer%3A%2F%2F192.168.1.108%2Fcom.alibaba.dubbo.demo.DemoService%3Fapplication%3Ddemo-consumer%26category%3Dconsumers%26check%3Dfalse%26dubbo%3D2.0.0%26group%3Db%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D9760%26qos.port%3D33333%26revision%3D0.0.1%26side%3Dconsumer%26timestamp%3D1583940947287%26version%3D0.0.1
+     * @param ephemeral 默认为true
+     */
     public void create(String path, boolean ephemeral) {
         int i = path.lastIndexOf('/');
-        if (i > 0) {
+        if (i > 0) {//默认正常情况大于0
             String parentPath = path.substring(0, i);
+            //检查节点是否已经存在，如果不存在则创建《此处需要连接ZK，如果连接失败，不进行处理》。首次均不存在
             if (!checkExists(parentPath)) {
                 create(parentPath, false);
             }

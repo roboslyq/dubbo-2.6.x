@@ -42,6 +42,10 @@ public class HeaderExchanger implements Exchanger {
      * @throws RemotingException
      */
     public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
+        // 创建 HeaderExchangeClient 实例，该方法包含了多个逻辑，分别如下：
+        //   1. new HeaderExchangeHandler(handler)
+        //	 2. new DecodeHandler(new HeaderExchangeHandler(handler))
+        //   3. Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))
         return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
     }
 

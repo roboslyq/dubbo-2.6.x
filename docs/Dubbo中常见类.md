@@ -1,8 +1,16 @@
-# 
+## dubbo-common
 
-## DubboNameSpaceHandler
-- DubboBeanDefinitionParser
-- AnnotationBeanDefinitionParser
+- ExtensionLoader
+- Proxy
+
+## dubbo-config-api
+
+- ApplicationModel
+- AbstractInterfaceConfig
+- ReferenceConfig
+- ServiceConfig
+- ProviderConfig
+- ReferenceConfig
 - ApplicationConfig
 - ModuleConfig
 - RegistryConfig
@@ -10,62 +18,50 @@
 - ProviderConfig
 - ConsumerConfig
 - ProtocolConfig
-- ServiceBean
-- ReferenceBean
-
-## dubbo-common
-
-- ExtensionLoader.java
-- Proxy.java
-
-## dubbo-config-api
-
-- ApplicationModel.java
-- AbstractInterfaceConfig.java
-- ReferenceConfig.java
-- ServiceConfig.java
-- ProviderConfig.java
-- ReferenceConfig.java
 
 ## dubbo-config-spring
 
-- ServiceBean.java
-- ReferenceBean.java
+- ServiceBean
+- ReferenceBean
+- DubboNameSpaceHandler
+
+- DubboBeanDefinitionParser
+- AnnotationBeanDefinitionParser
 
 ## dubbo-registry-api
 
-- RegistryProtocol.java
-- RegistryDirectory.java
-- AbstractRegistry.java
-- AbstractRegistryFactory.java
-- FailbackRegistry.java
+- RegistryProtocol
+- RegistryDirectory
+- AbstractRegistry
+- AbstractRegistryFactory
+- FailbackRegistry
 
 ##  dubbo-registry-zookeeper
 
-- ZookeeperRegistry.java
-- ZookeeperRegistryFactory.java
+- ZookeeperRegistry
+- ZookeeperRegistryFactory
 
 ## dubbo-remoting-api
 
-- Exchanger.java
-- AbstractServer.java
-- Transporters.java
-- JavassistProxyFactory.java
-- AbstractProxyFactory.java
-- InvokerInvocationHandler.java
+- Exchanger
+- AbstractServer
+- Transporters
+- JavassistProxyFactory
+- AbstractProxyFactory
+- InvokerInvocationHandler
 
 ## dubbo-rpc-default
 
-- DubboProtocol.java
+- DubboProtocol
 
 ## dubbo-remoting-netty
 
-- NettyServer.java
-- NettyTransporter.java
+- NettyServer
+- NettyTransporter
 
 ## dubbo-rpc-api
 
-- `ProtocolFilterWrapper.java`
+- `ProtocolFilterWrapper`
 
 > 基于扩展点自适应机制，所有的 `Protocol` 扩展点都会自动套上 `Wrapper` 类。
 >
@@ -73,7 +69,7 @@
 
 
 
-- `ProtocolListenerWrapper.java`
+- `ProtocolListenerWrapper`
 
 > 基于扩展点自适应机制，所有的 `Protocol` 扩展点都会自动套上 `Wrapper` 类。
 >
@@ -83,13 +79,13 @@
 
 ## dubbo-rpc-default
 
-- DubboProtocol.java
+- DubboProtocol
 
 ## dubbo-cluster
 
-AbstractClusterInvoker.java
-AvailableCluster.java
-BroadcastClusterInvoker.java
-FailbackClusterInvoker.java
-Cluster.java
-Directory.java
+- AbstractClusterInvoker
+- AvailableCluster
+- BroadcastClusterInvoker
+- FailbackClusterInvoker
+- Cluster
+- Directory

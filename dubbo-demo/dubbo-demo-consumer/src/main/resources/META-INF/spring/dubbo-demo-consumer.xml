@@ -24,13 +24,15 @@ limitations under the License.
     <!-- consumer's application name, used for tracing dependency relationship (not a matching criterion),
     don't set it same as provider -->
     <dubbo:application name="demo-consumer"/>
+    <dubbo:module name="mo1" owner="luoyq" id="mo1"></dubbo:module>
 
     <!-- use multicast registry center to discover service -->
-<!--     <dubbo:registry address="multicast://224.5.6.7:1234"/> -->
-<dubbo:registry address="zookeeper://47.93.201.88:2181?backup=39.104.184.69:2181,39.104.184.69:2181" />
+    <!-- <dubbo:registry address="multicast://224.5.6.7:1234"/> -->
+    <dubbo:registry address="zookeeper://47.93.201.88:2181?backup=39.104.184.69:2181,39.104.184.69:2181" />
 
     <!-- generate proxy for the remote service, then demoService can be used in the same way as the
     local regular interface -->
-    <dubbo:reference id="demoService1" check="false" interface="com.alibaba.dubbo.demo.DemoService" version="0.0.1" group="b"/>
+    <dubbo:reference module="mo1" id="demoService1" check="false" interface="com.alibaba.dubbo.demo.DemoService" version="0.0.1" group="b"/>
+    <dubbo:reference module="mo1" id="demoService2" check="false" interface="com.alibaba.dubbo.demo.DemoService" version="0.0.2" group="a"/>
 
 </beans>

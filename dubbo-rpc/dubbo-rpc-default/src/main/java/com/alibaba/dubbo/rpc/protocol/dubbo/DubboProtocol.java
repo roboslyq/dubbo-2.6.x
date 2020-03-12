@@ -229,6 +229,7 @@ public class DubboProtocol extends AbstractProtocol {
      * 暴露服务，同时启动dubbo服务监听，默认是netty
      */
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // url = dubbo://192.168.43.62:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.43.62&bind.port=20880&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&module=mo1&owner=luoyq&pid=7196&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583973438933&version=0.0.2
         URL url = invoker.getUrl();
         // 获取服务标识，理解成服务坐标也行。由服务组名，服务名，服务版本号以及端口组成。比如：
         // demoGroup/com.alibaba.dubbo.demo.DemoService:1.0.1:20880
@@ -385,11 +386,18 @@ public class DubboProtocol extends AbstractProtocol {
     public <T> Invoker<T> refer(Class<T> serviceType, URL url) throws RpcException {
     	//序列化参数优化
         optimizeSerialization(url);
-        // 获得远程通信客户端数组
-        // 创建 DubboInvoker 对象
-        // create rpc invoker.
-        // getClients(url)返回的是服务提供者的连接列表
-        DubboInvoker<T> invoker = new DubboInvoker<T>(serviceType, url, getClients(url), invokers);
+        /*
+         1、获得远程通信客户端数组
+         2、创建 DubboInvoker 对象
+         3、create rpc invoker.
+         4、getClients(url)返回的是服务提供者的连接列表《关键》，此处会调用Transport层，发起连接，得到Client。
+        */
+        DubboInvoker<T> invoker = new DubboInvoker<T>(
+                serviceType     //具体业务接口类型
+                , url           //服务暴露的URL
+                , getClients(url) // 获取所有的服务提供者，返回的是ExchangeClient数组。
+                , invokers  // 缓存列表
+        );
         // 添加到 `invokers`
         invokers.add(invoker);
         return invoker;
@@ -449,17 +457,21 @@ public class DubboProtocol extends AbstractProtocol {
 
     /**
      * Create new connection
+     * 客户端创建一个连接，返回Client。
      */
     private ExchangeClient initClient(URL url) {
 
         // client type setting.
+        // 获取Client类型
         String str = url.getParameter(Constants.CLIENT_KEY, url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_CLIENT));
 
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         // enable heartbeat by default
+        // 默认开启心跳机制
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
 
         // BIO is not allowed since it has severe performance issue.
+        // BIO阻塞模式被禁止，会影响服务器性能
         if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str)) {
             throw new RpcException("Unsupported client type: " + str + "," +
                     " supported client type is " + StringUtils.join(ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions(), " "));
@@ -468,9 +480,12 @@ public class DubboProtocol extends AbstractProtocol {
         ExchangeClient client;
         try {
             // connection should be lazy
+            // 是否延迟连接Server
             if (url.getParameter(Constants.LAZY_CONNECT_KEY, false)) {
+                //延迟连接
                 client = new LazyConnectExchangeClient(url, requestHandler);
             } else {
+                //测试连接
                 client = Exchangers.connect(url, requestHandler);
             }
         } catch (RemotingException e) {

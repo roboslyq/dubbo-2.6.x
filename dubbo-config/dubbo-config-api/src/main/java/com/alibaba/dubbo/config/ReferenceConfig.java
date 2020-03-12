@@ -398,7 +398,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         //attributes are stored by system context.
         StaticContext.getSystemContext().putAll(attributes);
 
-        //创建reference具体代理类
+        /*
+         * 创建reference具体代理类
+         */
         ref = createProxy(map);
 
         //ConsumerModel是对ReferenceConfig配置和代理类proxy的完整的包装。

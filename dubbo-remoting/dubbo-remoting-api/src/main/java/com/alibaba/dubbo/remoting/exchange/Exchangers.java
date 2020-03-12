@@ -103,6 +103,13 @@ public class Exchangers {
         return connect(URL.valueOf(url), handler);
     }
 
+    /**
+     * 连接服务器，返回一个客户端：消费者订阅服务时，获取服务器的连接。
+     * @param url
+     * @param handler
+     * @return
+     * @throws RemotingException
+     */
     public static ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
@@ -111,11 +118,18 @@ public class Exchangers {
             throw new IllegalArgumentException("handler == null");
         }
         url = url.addParameterIfAbsent(Constants.CODEC_KEY, "exchange");
-        return getExchanger(url).connect(url, handler);
+        return getExchanger(url)    //获取Exchanger
+                .connect(url, handler); //由Exchager发起连接
     }
 
+    /**
+     * 获取一个Exchager
+     * @param url
+     * @return
+     */
     public static Exchanger getExchanger(URL url) {
         String type = url.getParameter(Constants.EXCHANGER_KEY, Constants.DEFAULT_EXCHANGER);
+        //默认是HeaderExchanger
         return getExchanger(type);
     }
     /**
@@ -125,6 +139,7 @@ public class Exchangers {
      * @return
      */
     public static Exchanger getExchanger(String type) {
+        //默认是HeaderExchanger。（见Exchanger.class上的@SPI注解）
         return ExtensionLoader.getExtensionLoader(Exchanger.class).getExtension(type);
     }
 

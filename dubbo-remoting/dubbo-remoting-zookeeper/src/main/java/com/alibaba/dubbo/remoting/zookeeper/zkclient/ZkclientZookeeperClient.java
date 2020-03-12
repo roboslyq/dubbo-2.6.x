@@ -85,6 +85,11 @@ public class ZkclientZookeeperClient extends AbstractZookeeperClient<IZkChildLis
         }
     }
 
+    /**
+     * 检测节点是否存在
+     * @param path
+     * @return
+     */
     public boolean checkExists(String path) {
         try {
             return client.exists(path);

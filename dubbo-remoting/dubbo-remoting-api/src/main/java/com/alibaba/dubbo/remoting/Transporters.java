@@ -75,9 +75,9 @@ public class Transporters {
 
     /**
      * 客户端启动连接服务端入口
-     * @param url
-     * @param handlers
-     * @return
+     * @param url   DUBBO URL配置
+     * @param handlers  ChannerlHanler
+     * @return Client
      * @throws RemotingException
      */
     public static Client connect(URL url, ChannelHandler... handlers) throws RemotingException {
@@ -95,6 +95,10 @@ public class Transporters {
         return getTransporter().connect(url, handler);
     }
 
+    /**
+     * 默认实现是@SPI("netty")
+     * @return
+     */
     public static Transporter getTransporter() {
         return ExtensionLoader.getExtensionLoader(Transporter.class).getAdaptiveExtension();
     }

@@ -31,6 +31,7 @@ public class Consumer {
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"META-INF/spring/dubbo-demo-consumer.xml"});
         context.start();
         DemoService demoService = (DemoService) context.getBean("demoService1"); // get remote service proxy
+        DemoService demoService2 = (DemoService) context.getBean("demoService2"); // get remote service proxy
 //		Protocol p = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 //		Protocol p1 = ExtensionLoader.getExtensionLoader(Protocol.class).getDefaultExtension();
 //		Protocol p2 = ExtensionLoader.getExtensionLoader(Protocol.class).getExtension("xxxxxx");
@@ -40,7 +41,9 @@ public class Consumer {
             try {
                 Thread.sleep(1000);
                 String hello = demoService.sayHello("world"); // call remote method
+                String hello2 = demoService2.sayHello("world"); // call remote method
                 System.out.println(hello); // get result
+                System.out.println(hello2); // get result
 
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
