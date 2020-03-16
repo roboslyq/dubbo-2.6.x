@@ -27,7 +27,7 @@ import java.util.List;
  * Router. (SPI, Prototype, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Routing">Routing</a>
- *
+ * 路由选择器，根据URL，Invocation和已有invokers，选择出多个合适的invoker。
  * @see com.alibaba.dubbo.rpc.cluster.Cluster#join(Directory)
  * @see com.alibaba.dubbo.rpc.cluster.Directory#list(Invocation)
  */
@@ -43,10 +43,10 @@ public interface Router extends Comparable<Router> {
     /**
      * route.
      *
-     * @param invokers
-     * @param url        refer url
-     * @param invocation
-     * @return routed invokers
+     * @param invokers  备选的Invoker集合
+     * @param url        refer url 请求URL封装
+     * @param invocation    请求上下文环境
+     * @return routed invokers 可用的符合条件的Invoker集合
      * @throws RpcException
      */
     <T> List<Invoker<T>> route(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException;

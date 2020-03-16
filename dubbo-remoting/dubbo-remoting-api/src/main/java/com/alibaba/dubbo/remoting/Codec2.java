@@ -22,13 +22,28 @@ import com.alibaba.dubbo.common.extension.SPI;
 import com.alibaba.dubbo.remoting.buffer.ChannelBuffer;
 
 import java.io.IOException;
-
+/**
+ * 编码/解码器
+ */
 @SPI
 public interface Codec2 {
-
+    /**
+     * 编码
+     * @param channel
+     * @param buffer
+     * @param message
+     * @throws IOException
+     */
     @Adaptive({Constants.CODEC_KEY})
     void encode(Channel channel, ChannelBuffer buffer, Object message) throws IOException;
 
+    /**
+     * 解码
+     * @param channel
+     * @param buffer
+     * @return
+     * @throws IOException
+     */
     @Adaptive({Constants.CODEC_KEY})
     Object decode(Channel channel, ChannelBuffer buffer) throws IOException;
 
