@@ -27,13 +27,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * URL statistics. (API, Cached, ThreadSafe)
- *
+ * URL的统计信息，比如当前URL有多少活跃请求数，总请求数是多少，失败多少等
  * @see com.alibaba.dubbo.rpc.filter.ActiveLimitFilter
  * @see com.alibaba.dubbo.rpc.filter.ExecuteLimitFilter
  * @see com.alibaba.dubbo.rpc.cluster.loadbalance.LeastActiveLoadBalance
  */
 public class RpcStatus {
-
+    /**
+     * 使用ConcurrentMap来缓存URL信息
+     */
     private static final ConcurrentMap<String, RpcStatus> SERVICE_STATISTICS = new ConcurrentHashMap<String, RpcStatus>();
 
     private static final ConcurrentMap<String, ConcurrentMap<String, RpcStatus>> METHOD_STATISTICS = new ConcurrentHashMap<String, ConcurrentMap<String, RpcStatus>>();

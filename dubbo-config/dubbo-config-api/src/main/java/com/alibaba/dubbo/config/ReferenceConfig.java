@@ -94,7 +94,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private ConsumerConfig consumer;
     private String protocol;
     // interface proxy reference
-    //Service 对象
+    // Service 对象
     private transient volatile T ref;
     private transient volatile Invoker<?> invoker;
     /**
@@ -470,7 +470,8 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         }
                     }
                 }
-            } else { // assemble URL from register center's configuration
+            } else {
+                // assemble URL from register center's configuration
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
                     for (URL u : us) {
@@ -504,7 +505,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                      * 3、转换成Invoker之后，将其加入到invokers数组中
                      */
                     invokers.add(
-                            refprotocol.refer(interfaceClass, url)//服务引用，返回一个Invoker
+                            refprotocol.refer(interfaceClass, url) //服务引用，返回一个Invoker
                     );
                     if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                         registryURL = url; // use last registry url

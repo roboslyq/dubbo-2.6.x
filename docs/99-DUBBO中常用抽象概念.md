@@ -93,8 +93,17 @@ getSubscribedOverrideUrl里面，addParameters(Constants.CATEGORY_KEY, Constants
 
 如果configure目录有变化，那么会走到RegistryProtocol的OverrideListener里面，通过把configureUrl和当前的url进行合并，再与当前url比较，如果不一样，那么基于dubboprotocol重新export一次。从而让configure上面的url生效
 
+# 14 SPI扩展
 
+# 15 Adaptive自适应
+
+# 16 Active激活
+
+ 
 
 # 参考资料
 
- https://www.cnblogs.com/notlate/p/10088829.html 
+[Regitstry,route,cluster,loadbalance,directory关系汇总](https://www.cnblogs.com/notlate/p/10088829.html)
+
+[SPI Adaptive]( https://segmentfault.com/a/1190000020384210 )
+

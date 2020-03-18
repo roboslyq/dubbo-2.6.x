@@ -88,6 +88,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     protected ModuleConfig module;
 
     // registry centers
+    // 注册中心，支持多种不同的注册心同时存在
     protected List<RegistryConfig> registries;
 
     // connection events
@@ -174,6 +175,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         // 检测是否存在注册中心配置类，不存在则抛出异常
         checkRegistry();
         List<URL> registryList = new ArrayList<URL>();
+        // registries是指多种不同类型的注册中心
         if (registries != null && !registries.isEmpty()) {
             for (RegistryConfig config : registries) {
                 String address = config.getAddress();
@@ -208,7 +210,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                             map.put("protocol", "dubbo");
                         }
                     }
-                    // 解析得到 URL 列表，address 可能包含多个注册中心 ip，
+                    // 解析得到 URL 列表，address 可能包含多个注册中心 ip，即一个dubbo:registry标签的值可以使用分号";"分割。
+                    // 从而达到注册中心集群效果。
                     // 因此解析得到的是一个 URL 列表
                     List<URL> urls = UrlUtils.parseURLs(address, map);
                     for (URL url : urls) {
