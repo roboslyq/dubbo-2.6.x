@@ -85,7 +85,7 @@ public class RpcUtils {
 
     /**
      * Idempotent operation: invocation id will be added in async operation by default
-     *
+     * 添加 contextAttachments 到 RpcInvocation#attachment 变量中
      * @param url
      * @param inv
      */

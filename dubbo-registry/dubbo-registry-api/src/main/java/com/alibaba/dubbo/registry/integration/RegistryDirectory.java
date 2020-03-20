@@ -239,7 +239,8 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             }
         }
         /*
-         * providers 更新Provider信息，将URL信息转换成Invoker
+         * providers 更新Provider信息，将URL信息转换成Invoker。
+         * 重点：在此方法里，完成路由相关功能
          */
         refreshInvoker(invokerUrls);
     }
@@ -276,8 +277,10 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
              * 核心方法===> 将URL列表转成Invoker列表
              */
             Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map  将URL列表转成Invoker列表
-
-            Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // Change method name to map Invoker Map  换方法名映射Invoker列表
+            /*
+             * 重要方法：将方法名映射Invoker列表,即完成路由功能
+             */
+            Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // Change method name to map Invoker Map
             // state change
             // If the calculation is wrong, it is not processed.
             //如果计算错误，则不进行处理.
@@ -477,6 +480,12 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         return providerUrl;
     }
 
+    /**
+     * 根据method，从invokers中挑选出适合条件的invoke(还可能是多个，因此返回list)
+     * @param invokers
+     * @param method
+     * @return
+     */
     private List<Invoker<T>> route(List<Invoker<T>> invokers, String method) {
         Invocation invocation = new RpcInvocation(method, new Class<?>[0], new Object[0]);
         List<Router> routers = getRouters();
@@ -492,7 +501,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     /**
      * Transform the invokers list into a mapping relationship with a method
-     *
+     * 处理method与invokers映射关系。即通过method可以找到对应的invoker，从而实现路由功能
      * @param invokersMap Invoker Map
      * @return Mapping relation between Invoker and method
      */
@@ -502,8 +511,10 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         List<Invoker<T>> invokersList = new ArrayList<Invoker<T>>();
         if (invokersMap != null && invokersMap.size() > 0) {
             for (Invoker<T> invoker : invokersMap.values()) {
+                //判断invoker是不是有配置methods属性
                 String parameter = invoker.getUrl().getParameter(Constants.METHODS_KEY);
                 if (parameter != null && parameter.length() > 0) {
+                    //如果有，则使用逗号","分割处理(因为可以通过逗号分割，实现多个方法配置)
                     String[] methods = Constants.COMMA_SPLIT_PATTERN.split(parameter);
                     if (methods != null && methods.length > 0) {
                         for (String method : methods) {
@@ -522,6 +533,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                 invokersList.add(invoker);
             }
         }
+        /*
+         * 根据路由选择出合适的invoker集合。注意，此处第2个参数为null,即方法名为Null,,默认绑定接口中的所有方法。
+         */
         List<Invoker<T>> newInvokersList = route(invokersList, null);
         newMethodInvokerMap.put(Constants.ANY_VALUE, newInvokersList);
         if (serviceMethods != null && serviceMethods.length > 0) {

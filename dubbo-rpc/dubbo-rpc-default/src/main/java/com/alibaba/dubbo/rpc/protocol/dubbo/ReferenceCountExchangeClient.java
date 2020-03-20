@@ -40,6 +40,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
 
     //    private final ExchangeHandler handler;
     private final ConcurrentMap<String, LazyConnectExchangeClient> ghostClientMap;
+    // 默认值为HeaderExchangeClient
     private ExchangeClient client;
 
 
@@ -73,6 +74,13 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
         return client.getChannelHandler();
     }
 
+    /**
+     * 调用方法，发起远程请求
+     * @param request
+     * @param timeout
+     * @return
+     * @throws RemotingException
+     */
     public ResponseFuture request(Object request, int timeout) throws RemotingException {
         return client.request(request, timeout);
     }

@@ -49,15 +49,28 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
         super(directory);
     }
 
+    /**
+     *
+     * 消费者远程方法调用生产
+     * @param invocation 调用上下文
+     * @param invokers 可用的invoker。默认实现的协议为dubbo，所以默认此处是DubboInvoker
+     * @param loadbalance 负载均衡器
+     * @return
+     * @throws RpcException
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public Result doInvoke(Invocation invocation, final List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
+    public Result doInvoke(Invocation invocation,
+                            final List<Invoker<T>> invokers,
+                           LoadBalance loadbalance) throws RpcException {
         List<Invoker<T>> copyinvokers = invokers;
+        //保证invoker不为空
         checkInvokers(copyinvokers, invocation);
         int len = getUrl().getMethodParameter(invocation.getMethodName(), Constants.RETRIES_KEY, Constants.DEFAULT_RETRIES) + 1;
         if (len <= 0) {
             len = 1;
         }
         // retry loop.
+        // 设置 Invoker
         RpcException le = null; // last exception.
         List<Invoker<T>> invoked = new ArrayList<Invoker<T>>(copyinvokers.size()); // invoked invokers.
         Set<String> providers = new HashSet<String>(len);
@@ -70,10 +83,13 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 // check again
                 checkInvokers(copyinvokers, invocation);
             }
+            //根据负载均衡算法，选择一个可用的Invoker
             Invoker<T> invoker = select(loadbalance, invocation, copyinvokers, invoked);
+            //往已经使用过的Invoker列表中添加一条记录
             invoked.add(invoker);
             RpcContext.getContext().setInvokers((List) invoked);
             try {
+                //发起远程调用(例如实例为DubboInvoker)
                 Result result = invoker.invoke(invocation);
                 if (le != null && logger.isWarnEnabled()) {
                     logger.warn("Although retry the method " + invocation.getMethodName()

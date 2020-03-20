@@ -57,6 +57,34 @@ public class DubboCodec extends ExchangeCodec implements Codec2 {
     public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class<?>[0];
     private static final Logger log = LoggerFactory.getLogger(DubboCodec.class);
 
+    /**
+     * 服务提供者接受消费者请求时解码器，栈调用日志如下：
+     * decodeBody:61, DubboCodec (com.alibaba.dubbo.rpc.protocol.dubbo)
+     * decode:121, ExchangeCodec (com.alibaba.dubbo.remoting.exchange.codec)
+     * decode:82, ExchangeCodec (com.alibaba.dubbo.remoting.exchange.codec)
+     * decode:44, DubboCountCodec (com.alibaba.dubbo.rpc.protocol.dubbo)
+     * messageReceived:133, NettyCodecAdapter$InternalDecoder (com.alibaba.dubbo.remoting.transport.netty)
+     * handleUpstream:70, SimpleChannelUpstreamHandler (org.jboss.netty.channel)
+     * sendUpstream:564, DefaultChannelPipeline (org.jboss.netty.channel)
+     * sendUpstream:559, DefaultChannelPipeline (org.jboss.netty.channel)
+     * fireMessageReceived:268, Channels (org.jboss.netty.channel)
+     * fireMessageReceived:255, Channels (org.jboss.netty.channel)
+     * read:88, NioWorker (org.jboss.netty.channel.socket.nio)
+     * process:108, AbstractNioWorker (org.jboss.netty.channel.socket.nio)
+     * run:337, AbstractNioSelector (org.jboss.netty.channel.socket.nio)
+     * run:89, AbstractNioWorker (org.jboss.netty.channel.socket.nio)
+     * run:178, NioWorker (org.jboss.netty.channel.socket.nio)
+     * run:108, ThreadRenamingRunnable (org.jboss.netty.util)
+     * run:42, DeadLockProofWorker$1 (org.jboss.netty.util.internal)
+     * runWorker:1142, ThreadPoolExecutor (java.util.concurrent)
+     * run:617, ThreadPoolExecutor$Worker (java.util.concurrent)
+     * run:745, Thread (java.lang)
+     * @param channel
+     * @param is
+     * @param header
+     * @return
+     * @throws IOException
+     */
     protected Object decodeBody(Channel channel, InputStream is, byte[] header) throws IOException {
         byte flag = header[2], proto = (byte) (flag & SERIALIZATION_MASK);
         Serialization s = CodecSupport.getSerialization(channel.getUrl(), proto);
@@ -159,6 +187,52 @@ public class DubboCodec extends ExchangeCodec implements Codec2 {
         return new byte[]{};
     }
 
+    /**
+     * 消费者向服务提供者发起请求时的编码器，与服务端的解码器对应。
+     * encodeRequestData:201, DubboCodec (com.alibaba.dubbo.rpc.protocol.dubbo)
+     * encodeRequest:231, ExchangeCodec (com.alibaba.dubbo.remoting.exchange.codec)
+     * encode:70, ExchangeCodec (com.alibaba.dubbo.remoting.exchange.codec)
+     * encode:37, DubboCountCodec (com.alibaba.dubbo.rpc.protocol.dubbo)
+     * encode:80, NettyCodecAdapter$InternalEncoder (com.alibaba.dubbo.remoting.transport.netty)
+     * doEncode:66, OneToOneEncoder (org.jboss.netty.handler.codec.oneone)
+     * handleDownstream:59, OneToOneEncoder (org.jboss.netty.handler.codec.oneone)
+     * sendDownstream:591, DefaultChannelPipeline (org.jboss.netty.channel)
+     * sendDownstream:784, DefaultChannelPipeline$DefaultChannelHandlerContext (org.jboss.netty.channel)
+     * writeRequested:292, SimpleChannelHandler (org.jboss.netty.channel)
+     * writeRequested:98, NettyHandler (com.alibaba.dubbo.remoting.transport.netty)
+     * handleDownstream:254, SimpleChannelHandler (org.jboss.netty.channel)
+     * sendDownstream:591, DefaultChannelPipeline (org.jboss.netty.channel)
+     * sendDownstream:582, DefaultChannelPipeline (org.jboss.netty.channel)
+     * write:704, Channels (org.jboss.netty.channel)
+     * write:671, Channels (org.jboss.netty.channel)
+     * write:348, AbstractChannel (org.jboss.netty.channel)
+     * send:106, NettyChannel (com.alibaba.dubbo.remoting.transport.netty)
+     * send:256, AbstractClient (com.alibaba.dubbo.remoting.transport)
+     * send:52, AbstractPeer (com.alibaba.dubbo.remoting.transport)
+     * request:141, HeaderExchangeChannel (com.alibaba.dubbo.remoting.exchange.support.header)
+     * request:100, HeaderExchangeClient (com.alibaba.dubbo.remoting.exchange.support.header)
+     * request:85, ReferenceCountExchangeClient (com.alibaba.dubbo.rpc.protocol.dubbo)
+     * doInvoke:128, DubboInvoker (com.alibaba.dubbo.rpc.protocol.dubbo)
+     * invoke:142, AbstractInvoker (com.alibaba.dubbo.rpc.protocol)
+     * invoke:73, ListenerInvokerWrapper (com.alibaba.dubbo.rpc.listener)
+     * invoke:74, MonitorFilter (com.alibaba.dubbo.monitor.support)
+     * invoke:71, ProtocolFilterWrapper$1 (com.alibaba.dubbo.rpc.protocol)
+     * invoke:53, FutureFilter (com.alibaba.dubbo.rpc.protocol.dubbo.filter)
+     * invoke:71, ProtocolFilterWrapper$1 (com.alibaba.dubbo.rpc.protocol)
+     * invoke:47, ConsumerContextFilter (com.alibaba.dubbo.rpc.filter)
+     * invoke:71, ProtocolFilterWrapper$1 (com.alibaba.dubbo.rpc.protocol)
+     * invoke:52, InvokerWrapper (com.alibaba.dubbo.rpc.protocol)
+     * doInvoke:93, FailoverClusterInvoker (com.alibaba.dubbo.rpc.cluster.support)
+     * invoke:241, AbstractClusterInvoker (com.alibaba.dubbo.rpc.cluster.support)
+     * invoke:82, MockClusterInvoker (com.alibaba.dubbo.rpc.cluster.support.wrapper)
+     * invoke:75, InvokerInvocationHandler (com.alibaba.dubbo.rpc.proxy)
+     * sayHello:-1, proxy0 (com.alibaba.dubbo.common.bytecode)
+     * main:43, Consumer (com.alibaba.dubbo.demo.consumer)
+     * @param channel NettyChannel
+     * @param out Hession2ObjectOutput
+     * @param data RpcInvocation
+     * @throws IOException
+     */
     @Override
     protected void encodeRequestData(Channel channel, ObjectOutput out, Object data) throws IOException {
         RpcInvocation inv = (RpcInvocation) data;

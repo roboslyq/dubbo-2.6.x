@@ -17,18 +17,28 @@
 package com.alibaba.dubbo.rpc.proxy;
 
 import com.alibaba.dubbo.rpc.Invoker;
+import com.alibaba.dubbo.rpc.ProxyFactory;
 import com.alibaba.dubbo.rpc.RpcInvocation;
+import com.alibaba.dubbo.rpc.proxy.javassist.JavassistProxyFactory;
+import com.alibaba.dubbo.rpc.proxy.jdk.JdkProxyFactory;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
- * InvokerHandler：Invoker代理类，此处的Invoke()方法会调用真正的Invoker实现
+ * 1、消费者发起接口调用<Proxy0代理类中>,触发此方法调用InvokerHandler：Invoker代理类，此处的Invoke()方法会调用真正的Invoker实现
+ * 2、具体初始化详情见{@link ProxyFactory#getProxy },具体实现为{@link JavassistProxyFactory} 和{@link JdkProxyFactory}
+ *    其中，默认实现是{@link JavassistProxyFactory}
  */
 public class InvokerInvocationHandler implements InvocationHandler {
 
+    //此变量类型为MockClusterInvoker 内部封装了服务降级逻辑。
     private final Invoker<?> invoker;
 
+    /**
+     *
+     * @param handler
+     */
     public InvokerInvocationHandler(Invoker<?> handler) {
         this.invoker = handler;
     }
@@ -44,9 +54,11 @@ public class InvokerInvocationHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
+        // 拦截定义在 Object 类中的方法（未被子类重写），比如 wait/notify
         if (method.getDeclaringClass() == Object.class) {
             return method.invoke(invoker, args);
         }
+        // 如果 toString、hashCode 和 equals 等方法被子类重写了，这里也直接调用
         if ("toString".equals(methodName) && parameterTypes.length == 0) {
             return invoker.toString();
         }
@@ -57,8 +69,8 @@ public class InvokerInvocationHandler implements InvocationHandler {
             return invoker.equals(args[0]);
         }
         /*
-            调用invoker的方法：
-            1、创建上下文Invocation
+         * 1、此inovker实例为：MockClusterInvoker
+         * 2、将 method 和 args 封装到 RpcInvocation 中，并执行后续的调用创建上下文Invocation
          */
         return invoker.invoke(new RpcInvocation(method, args)
             ).recreate();

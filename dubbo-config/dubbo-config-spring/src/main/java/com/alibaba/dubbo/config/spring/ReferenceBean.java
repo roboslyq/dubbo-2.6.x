@@ -41,6 +41,24 @@ import java.util.Map;
  * 1、基于Spring schema的扩展机制
  * 2、ReferenceFactoryBean,是消费者初始化入口Bean,详情见DubboNamespaceHandler。
  * 因继承InitializingBean及ApplicationContextAware，故在spring启动过程可进入相应方法。
+ * 3、当ReferenceBean完成初始化，得到Proxy之后，整个调用过程如下：
+ * 以 DemoService 为例，将 sayHello 方法的整个调用路径贴出来。
+ * proxy0#sayHello(String)
+ *   —> InvokerInvocationHandler#invoke(Object, Method, Object[])
+ *     —> MockClusterInvoker#invoke(Invocation)
+ *       —> AbstractClusterInvoker#invoke(Invocation)
+ *         —> FailoverClusterInvoker#doInvoke(Invocation, List<Invoker<T>>, LoadBalance)
+ *           —> Filter#invoke(Invoker, Invocation)  // 包含多个 Filter 调用
+ *             —> ListenerInvokerWrapper#invoke(Invocation)
+ *               —> AbstractInvoker#invoke(Invocation)
+ *                 —> DubboInvoker#doInvoke(Invocation)
+ *                   —> ReferenceCountExchangeClient#request(Object, int)
+ *                     —> HeaderExchangeClient#request(Object, int)
+ *                       —> HeaderExchangeChannel#request(Object, int)
+ *                         —> AbstractPeer#send(Object)
+ *                           —> AbstractClient#send(Object, boolean)
+ *                             —> NettyChannel#send(Object, boolean)
+ *                               —> NioClientSocketChannel#write(Object)
  * @export
  */
 public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean, ApplicationContextAware, InitializingBean, DisposableBean {

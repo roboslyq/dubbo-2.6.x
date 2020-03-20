@@ -78,10 +78,11 @@ public class NettyServer extends AbstractServer implements Server {
         // 创建 boss 和 worker 线程池
         ExecutorService boss = Executors.newCachedThreadPool(new NamedThreadFactory("NettyServerBoss", true));
         ExecutorService worker = Executors.newCachedThreadPool(new NamedThreadFactory("NettyServerWorker", true));
+        // 创建NioServerSocketChannelFactory，此工厂类可以创建NioServerSocketChannel
         ChannelFactory channelFactory = new NioServerSocketChannelFactory(boss, worker, getUrl().getPositiveParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS));
         // 创建 ServerBootstrap
         bootstrap = new ServerBootstrap(channelFactory);
-
+        // getUrl = dubbo://192.168.43.62:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.43.62&bind.port=20880&channel.readonly.sent=true&codec=dubbo&dubbo=2.0.0&generic=false&group=a&heartbeat=60000&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&module=mo1&owner=luoyq&pid=6792&qos.port=22222&revision=0.0.2&side=provider&timestamp=1584664546286&version=0.0.2
         final NettyHandler nettyHandler = new NettyHandler(getUrl(), this);
         channels = nettyHandler.getChannels();
         // 设置 PipelineFactory
@@ -91,12 +92,14 @@ public class NettyServer extends AbstractServer implements Server {
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() {
                 //设置netty的adapter(编码/解码)
-                NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyServer.this);
+                NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), //返回实例：DubboCountCodec
+                        getUrl(), NettyServer.this);
                 ChannelPipeline pipeline = Channels.pipeline();
                 /*int idleTimeout = getIdleTimeout();
                 if (idleTimeout > 10000) {
                     pipeline.addLast("timer", new IdleStateHandler(timer, idleTimeout / 1000, 0, 0));
                 }*/
+
                 pipeline.addLast("decoder", adapter.getDecoder());
                 pipeline.addLast("encoder", adapter.getEncoder());
                 pipeline.addLast("handler", nettyHandler);

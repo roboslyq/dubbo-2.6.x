@@ -53,6 +53,7 @@ public class NettyClient extends AbstractClient {
             Constants.DEFAULT_IO_THREADS);
     private ClientBootstrap bootstrap;
 
+    // 这里的 Channel 全限定名称为 org.jboss.netty.channel.Channel
     private volatile Channel channel; // volatile, please copy reference to use
 
     public NettyClient(final URL url, final ChannelHandler handler) throws RemotingException {
@@ -68,13 +69,20 @@ public class NettyClient extends AbstractClient {
         bootstrap.setOption("keepAlive", true);
         bootstrap.setOption("tcpNoDelay", true);
         bootstrap.setOption("connectTimeoutMillis", getTimeout());
+        //getUrl = dubbo://192.168.43.62:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-consumer&check=false&codec=dubbo&dubbo=2.0.0&generic=false&group=b&heartbeat=60000&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&module=mo1&owner=luoyq&pid=7000&qos.port=33333&register.ip=192.168.43.62&remote.timestamp=1584664893538&revision=0.0.1&side=consumer&timestamp=1584665130868&version=0.0.1
         final NettyHandler nettyHandler = new NettyHandler(getUrl(), this);
+
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             public ChannelPipeline getPipeline() {
+                //设置编码解码器NettyCodecAdapter
                 NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyClient.this);
+                //DefaultChannelPipeline{(decoder = com.alibaba.dubbo.remoting.transport.netty.NettyCodecAdapter$InternalDecoder)}
                 ChannelPipeline pipeline = Channels.pipeline();
+                //NettyCodecAdapter$InternalDecoder
                 pipeline.addLast("decoder", adapter.getDecoder());
+                //NettyCodecAdapter$InternalEncoder
                 pipeline.addLast("encoder", adapter.getEncoder());
+                //NettyHandler
                 pipeline.addLast("handler", nettyHandler);
                 return pipeline;
             }

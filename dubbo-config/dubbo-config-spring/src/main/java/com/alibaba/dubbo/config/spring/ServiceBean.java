@@ -43,11 +43,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * ServiceFactoryBean
+ * 一、ServiceFactoryBean
  *  (1)DUBBO集成spring的入口，会执行InitializingBean#afterPropertiesSet 和 ApplicationListener#onApplicationEvent。其中前者的优化级高于后者。
  *  (2)每初始化一个<dubbo:service>标签即会生成一个ServiceBean，执行一次afterPropertiesSet方法。
  *  (3)启动服务器的目的：将每一个服务注册到注册中并且开通一个监听服务用来接收客户端的请求。
  *  (4)服务发布过程会动态加载各种扩展点及字节码生成技术，所以要十分小心。需要通过断点来获取具体生成的字节码内容，才能明白流程怎么走。
+ *
+ * 二、当ServiceBean被调用时处理过程（以官方示例dubbo-demo项目中的DemoService为例，具体实现为DemoServiceImpl）
+ * ChannelEventRunnable#run()
+ *   —> DecodeHandler#received(Channel, Object)
+ *     —> HeaderExchangeHandler#received(Channel, Object)
+ *       —> HeaderExchangeHandler#handleRequest(ExchangeChannel, Request)
+ *         —> DubboProtocol.requestHandler#reply(ExchangeChannel, Object)
+ *           —> Filter#invoke(Invoker, Invocation)
+ *             —> AbstractProxyInvoker#invoke(Invocation)
+ *               —> Wrapper0#invokeMethod(Object, String, Class[], Object[])
+ *                 —> DemoServiceImpl#sayHello(String)
  * @export
  */
 public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanNameAware {

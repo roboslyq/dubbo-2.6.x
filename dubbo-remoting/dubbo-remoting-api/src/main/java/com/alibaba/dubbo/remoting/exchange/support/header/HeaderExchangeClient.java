@@ -46,6 +46,7 @@ public class HeaderExchangeClient implements ExchangeClient {
 
     private static final ScheduledThreadPoolExecutor scheduled = new ScheduledThreadPoolExecutor(2, new NamedThreadFactory("dubbo-remoting-client-heartbeat", true));
     private final Client client;
+    // HeaderExchangeChannel
     private final ExchangeChannel channel;
     // heartbeat timer
     private ScheduledFuture<?> heartbeatTimer;
@@ -70,6 +71,12 @@ public class HeaderExchangeClient implements ExchangeClient {
         }
     }
 
+    /**
+     * 发起调用
+     * @param request
+     * @return
+     * @throws RemotingException
+     */
     public ResponseFuture request(Object request) throws RemotingException {
         return channel.request(request);
     }
@@ -82,6 +89,13 @@ public class HeaderExchangeClient implements ExchangeClient {
         return channel.getRemoteAddress();
     }
 
+    /**
+     * 发起远程调用
+     * @param request
+     * @param timeout
+     * @return
+     * @throws RemotingException
+     */
     public ResponseFuture request(Object request, int timeout) throws RemotingException {
         return channel.request(request, timeout);
     }
@@ -106,6 +120,12 @@ public class HeaderExchangeClient implements ExchangeClient {
         channel.send(message);
     }
 
+    /**
+     * 发送请求
+     * @param message
+     * @param sent    already sent to socket?
+     * @throws RemotingException
+     */
     public void send(Object message, boolean sent) throws RemotingException {
         channel.send(message, sent);
     }

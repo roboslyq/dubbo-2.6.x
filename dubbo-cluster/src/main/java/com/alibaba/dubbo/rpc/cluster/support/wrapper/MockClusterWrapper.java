@@ -23,7 +23,7 @@ import com.alibaba.dubbo.rpc.cluster.Directory;
 
 /**
  * mock impl
- *
+ * mock实现
  */
 public class MockClusterWrapper implements Cluster {
 
@@ -33,7 +33,15 @@ public class MockClusterWrapper implements Cluster {
         this.cluster = cluster;
     }
 
+    /**
+     * 在RegistryProtocol# doRefer()方法中调用cluster.join方法
+     * @param directory
+     * @param <T>
+     * @return
+     * @throws RpcException
+     */
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
+        //初始化MockClusterInvoker
         return new MockClusterInvoker<T>(directory,
                 this.cluster.join(directory));
     }

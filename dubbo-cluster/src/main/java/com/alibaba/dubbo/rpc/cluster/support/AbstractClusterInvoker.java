@@ -215,20 +215,29 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
         return null;
     }
 
+    /**
+     * 调用远程方法入口，会调用具体子类实现的doInvoker方法。默认子类是FailoverClusterInvoker
+     * @param invocation    上下文环境
+     * @return
+     * @throws RpcException
+     */
     public Result invoke(final Invocation invocation) throws RpcException {
 
         checkWhetherDestroyed();
 
         LoadBalance loadbalance;
-
+        // 设置 Invoker
         List<Invoker<T>> invokers = list(invocation);
+        //负载均衡器处理
         if (invokers != null && !invokers.isEmpty()) {
             loadbalance = ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension(invokers.get(0).getUrl()
                     .getMethodParameter(invocation.getMethodName(), Constants.LOADBALANCE_KEY, Constants.DEFAULT_LOADBALANCE));
         } else {
             loadbalance = ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension(Constants.DEFAULT_LOADBALANCE);
         }
+        // 设置 attachment
         RpcUtils.attachInvocationIdIfAsync(getUrl(), invocation);
+        // 抽象方法，由子类实现
         return doInvoke(invocation, invokers, loadbalance);
     }
 

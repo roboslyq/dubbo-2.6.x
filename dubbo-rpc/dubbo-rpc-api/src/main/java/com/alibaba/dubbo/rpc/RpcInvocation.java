@@ -18,6 +18,7 @@ package com.alibaba.dubbo.rpc;
 
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
+import com.alibaba.dubbo.rpc.proxy.InvokerInvocationHandler;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -27,7 +28,7 @@ import java.util.Map;
 
 /**
  * RPC Invocation.
- *
+ * RPC 调用上下文，详情见{@link InvokerInvocationHandler}
  * @serial Don't change the class name and properties.
  */
 public class RpcInvocation implements Invocation, Serializable {

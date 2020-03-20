@@ -41,6 +41,9 @@ final class HeaderExchangeChannel implements ExchangeChannel {
 
     private static final String CHANNEL_KEY = HeaderExchangeChannel.class.getName() + ".CHANNEL";
 
+    /**
+     * 此处Channel默认为AbstractPeer
+     */
     private final Channel channel;
 
     private volatile boolean closed = false;
@@ -49,6 +52,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         if (channel == null) {
             throw new IllegalArgumentException("channel == null");
         }
+        // 这里的 channel 指向的是 NettyClient
         this.channel = channel;
     }
 
@@ -76,6 +80,12 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         send(message, getUrl().getParameter(Constants.SENT_KEY, false));
     }
 
+    /**
+     * 消费者向服务提供者发送请求
+     * @param message
+     * @param sent    already sent to socket?
+     * @throws RemotingException
+     */
     public void send(Object message, boolean sent) throws RemotingException {
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send message " + message + ", cause: The channel " + this + " is closed!");
@@ -83,31 +93,51 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         if (message instanceof Request
                 || message instanceof Response
                 || message instanceof String) {
+            //具体的Channel，默认实现为NettyChannel
             channel.send(message, sent);
         } else {
+            //构建Request请求体
             Request request = new Request();
             request.setVersion("2.0.0");
             request.setTwoWay(false);
             request.setData(message);
+            //发送请求
             channel.send(request, sent);
         }
     }
 
+    /**
+     * 向远程服务提供者发起请求
+     * @param request
+     * @return
+     * @throws RemotingException
+     */
     public ResponseFuture request(Object request) throws RemotingException {
         return request(request, channel.getUrl().getPositiveParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT));
     }
 
+    /**
+     *
+     * @param request
+     * @param timeout
+     * @return
+     * @throws RemotingException
+     */
     public ResponseFuture request(Object request, int timeout) throws RemotingException {
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send request " + request + ", cause: The channel " + this + " is closed!");
         }
-        // create request.
+        // create request.构建请求Request
         Request req = new Request();
         req.setVersion("2.0.0");
+        // 设置双向通信标志为 true
         req.setTwoWay(true);
+        // 这里的 request 变量类型为 RpcInvocation
         req.setData(request);
+        // 创建 DefaultFuture 对象
         DefaultFuture future = new DefaultFuture(channel, req, timeout);
         try {
+            // 调用 NettyClient 的 send 方法发送请求
             channel.send(req);
         } catch (RemotingException e) {
             future.cancel();

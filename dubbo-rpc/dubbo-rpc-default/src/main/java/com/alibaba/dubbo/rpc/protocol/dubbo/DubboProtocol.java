@@ -393,11 +393,11 @@ public class DubboProtocol extends AbstractProtocol {
          4、getClients(url)返回的是服务提供者的连接列表《关键》，此处会调用Transport层，发起连接，得到Client。
         */
         DubboInvoker<T> invoker = new DubboInvoker<T>(
-                serviceType     //具体业务接口类型
-                , url           //服务暴露的URL
-                , getClients(url) // 获取所有的服务提供者，返回的是ExchangeClient数组。
-                , invokers  // 缓存列表
-        );
+                                                        serviceType         //具体业务接口类型
+                                                        , url               //服务暴露的URL
+                                                        , getClients(url)   //获取所有的服务提供者，返回的是ExchangeClient数组。
+                                                        , invokers          //缓存列表
+                                                    );
         // 添加到 `invokers`
         invokers.add(invoker);
         return invoker;

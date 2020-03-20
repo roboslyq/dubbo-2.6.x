@@ -29,13 +29,14 @@ import com.alibaba.dubbo.rpc.proxy.InvokerInvocationHandler;
  */
 public class JavassistProxyFactory extends AbstractProxyFactory {
 
-    @SuppressWarnings("unchecked")
     /**
-     * 消费端启动时，获取代理proxy对象<InvokerInvocationHandler>。
+     * 消费端启动时，获取代理proxy对象<其中InvokerInvocationHandler为生成代理类的类属性，同时完成InvokerInvocationHandler中的invoker初始化。>。
      */
+    @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
         return (T) Proxy.getProxy(interfaces).newInstance(new InvokerInvocationHandler(invoker));
     }
+
     /**
      * 服务端，生成Invoker,即将service或refrence的ref(proxy),type(interface)及发布的注册中心URL封装为Invoker。使用了包装模式。
      */
