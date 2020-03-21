@@ -39,7 +39,7 @@ final class NettyChannel extends AbstractChannel {
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
 
     private static final ConcurrentMap<org.jboss.netty.channel.Channel, NettyChannel> channelMap = new ConcurrentHashMap<org.jboss.netty.channel.Channel, NettyChannel>();
-
+    //NioClientSocketChannel
     private final org.jboss.netty.channel.Channel channel;
 
     private final Map<String, Object> attributes = new ConcurrentHashMap<String, Object>();
@@ -102,7 +102,7 @@ final class NettyChannel extends AbstractChannel {
         boolean success = true;
         int timeout = 0;
         try {
-            //  发送消息(包含请求和响应消息)
+            //  channel= NioClientSocketChannel,发送消息(包含请求和响应消息):
             ChannelFuture future = channel.write(message);
 
             // sent 的值源于 <dubbo:method sent="true/false" /> 中 sent 的配置值，有两种配置值：

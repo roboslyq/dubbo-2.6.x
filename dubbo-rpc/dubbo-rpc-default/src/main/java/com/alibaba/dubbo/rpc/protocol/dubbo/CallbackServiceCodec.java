@@ -263,7 +263,7 @@ class CallbackServiceCodec {
         // get URL directly
         // 获取URL
         URL url = inv.getInvoker() == null ? null : inv.getInvoker().getUrl();
-        //判断参数是不是回调函数
+        //判断参数是不是回调函数《如果不是则返回0》
         byte callbackstatus = isCallBack(url, inv.getMethodName(), paraIndex);
         Object[] args = inv.getArguments();
         Class<?>[] pts = inv.getParameterTypes();

@@ -204,7 +204,17 @@ public class ExchangeCodec extends TelnetCodec {
         return req.getData();
     }
 
+    /**
+     * 编码，具体实现由子类提供，比对DubboCodec
+     * @param channel
+     * @param buffer
+     * @param req
+     * @throws IOException
+     */
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
+        /*
+         * 获取序列化工具，默认实现是hession2
+         */
         Serialization serialization = getSerialization(channel);
         // header.
         byte[] header = new byte[HEADER_LENGTH];

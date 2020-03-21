@@ -24,6 +24,7 @@ import com.alibaba.dubbo.rpc.RpcException;
 
 /**
  * InvokerWrapper
+ * Inovker的包装类
  */
 public class InvokerWrapper<T> implements Invoker<T> {
 
@@ -49,6 +50,7 @@ public class InvokerWrapper<T> implements Invoker<T> {
     }
 
     public Result invoke(Invocation invocation) throws RpcException {
+       // invoker = ProtocolFilterWrapper
         return invoker.invoke(invocation);
     }
 

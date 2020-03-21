@@ -88,8 +88,10 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
     @Override
     protected Result doInvoke(final Invocation invocation) throws Throwable {
         RpcInvocation inv = (RpcInvocation) invocation;
+        // methodName = "sayHello"
         final String methodName = RpcUtils.getMethodName(invocation);
         // 设置 path 和 version 到 attachment 中
+        // getUrl().getPath() = com.alibaba.dubbo.demo.DemoService
         inv.setAttachment(Constants.PATH_KEY, getUrl().getPath());
         inv.setAttachment(Constants.VERSION_KEY, version);
         //调用客户端，有多层client包装，具体顺序为【ReferenceCountExchangeClient -> HeaderExchangeClient -> HeaderExchangeChannel】
@@ -122,9 +124,9 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 RpcContext.getContext().setFuture(new FutureAdapter<Object>(future));
                 // 暂时返回一个空结果
                 return new RpcResult();
-            } else {                // 同步调用
+            } else {                // 同步调用<当前版本默认的调用方式>
                 RpcContext.getContext().setFuture(null);
-                // 发送请求，得到一个 ResponseFuture 实例，并调用该实例的 get 方法进行等待
+                // currentClient = ReferenceCountExchangeClient： 发送请求，得到一个 ResponseFuture 实例，并调用该实例的 get 方法进行等待
                 return (Result) currentClient.request(inv, timeout).get();
             }
         } catch (TimeoutException e) {

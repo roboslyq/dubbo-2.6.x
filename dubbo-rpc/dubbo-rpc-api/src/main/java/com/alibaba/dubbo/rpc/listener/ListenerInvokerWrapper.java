@@ -69,6 +69,12 @@ public class ListenerInvokerWrapper<T> implements Invoker<T> {
         return invoker.isAvailable();
     }
 
+    /**
+     * 此处的Invoker为DubboInvoer,即具体的Invoker实现
+     * @param invocation    上下文环境
+     * @return
+     * @throws RpcException
+     */
     public Result invoke(Invocation invocation) throws RpcException {
         return invoker.invoke(invocation);
     }

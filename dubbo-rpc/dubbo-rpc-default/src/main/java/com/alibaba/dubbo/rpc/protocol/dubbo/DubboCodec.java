@@ -259,6 +259,11 @@ public class DubboCodec extends ExchangeCodec implements Codec2 {
                         encodeInvocationArgument(channel, inv, i)
                 );
             }
+        // inv.getAttachments()值如下：
+        //0 = {HashMap$Node@3482} "path" -> "com.alibaba.dubbo.demo.DemoService"
+        //1 = {HashMap$Node@3483} "interface" -> "com.alibaba.dubbo.demo.DemoService"
+        //2 = {HashMap$Node@3484} "version" -> "0.0.1"
+        //3 = {HashMap$Node@3485} "group" -> "b"
         out.writeObject(inv.getAttachments());
     }
 

@@ -20,6 +20,7 @@ import java.io.IOException;
 
 /**
  * Object output.
+ * 序列化，将Object转换成字节流输出
  */
 public interface ObjectOutput extends DataOutput {
 

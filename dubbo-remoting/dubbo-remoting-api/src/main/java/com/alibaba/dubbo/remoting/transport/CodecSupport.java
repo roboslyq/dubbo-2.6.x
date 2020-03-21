@@ -29,6 +29,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 编码/解码工具类
+ */
 public class CodecSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(CodecSupport.class);
@@ -59,6 +62,11 @@ public class CodecSupport {
         return ID_SERIALIZATION_MAP.get(id);
     }
 
+    /**
+     * 获取序列化实现
+     * @param url
+     * @return
+     */
     public static Serialization getSerialization(URL url) {
         return ExtensionLoader.getExtensionLoader(Serialization.class).getExtension(
                 url.getParameter(Constants.SERIALIZATION_KEY, Constants.DEFAULT_REMOTING_SERIALIZATION));

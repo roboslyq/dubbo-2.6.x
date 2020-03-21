@@ -68,6 +68,7 @@ public class ProtocolFilterWrapper implements Protocol {
                     }
 
                     public Result invoke(Invocation invocation) throws RpcException {
+                        // filter = ConsumerContextFilter --> FutureFilter-->MonitorFilter
                         return filter.invoke(next, invocation);
                     }
 
@@ -81,7 +82,7 @@ public class ProtocolFilterWrapper implements Protocol {
                     }
                 };
             }
-        }
+}
         return last;
     }
 

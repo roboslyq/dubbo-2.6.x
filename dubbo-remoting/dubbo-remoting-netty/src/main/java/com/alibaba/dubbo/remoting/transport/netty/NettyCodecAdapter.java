@@ -37,6 +37,7 @@ import java.io.IOException;
 
 /**
  * NettyCodecAdapter.
+ * Netty编码适配器
  */
 final class NettyCodecAdapter {
 
@@ -70,17 +71,26 @@ final class NettyCodecAdapter {
 
     @Sharable
     private class InternalEncoder extends OneToOneEncoder {
-
+        /**
+         * 编码，与Netty对接入口，返回Object
+         * @param ctx
+         * @param ch
+         * @param msg
+         * @return
+         * @throws Exception
+         */
         @Override
         protected Object encode(ChannelHandlerContext ctx, Channel ch, Object msg) throws Exception {
             com.alibaba.dubbo.remoting.buffer.ChannelBuffer buffer =
                     com.alibaba.dubbo.remoting.buffer.ChannelBuffers.dynamicBuffer(1024);
             NettyChannel channel = NettyChannel.getOrAddChannel(ch, url, handler);
             try {
+                //DubboCountCodec->ExchangeCodec->DubboCodec
                 codec.encode(channel, buffer, msg);
             } finally {
                 NettyChannel.removeChannelIfDisconnected(ch);
             }
+            //以Buffer形式返回
             return ChannelBuffers.wrappedBuffer(buffer.toByteBuffer());
         }
     }

@@ -75,7 +75,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
     }
 
     /**
-     * 调用方法，发起远程请求
+     * DubboInvoker#doInvoke(final Invocation invocation)  调用方法，发起远程请求
      * @param request
      * @param timeout
      * @return

@@ -26,27 +26,28 @@ import java.io.OutputStream;
 
 /**
  * Serialization. (SPI, Singleton, ThreadSafe)
+ * Dubbo序列化实现，默认是hession2
  */
 @SPI("hessian2")
 public interface Serialization {
 
     /**
      * get content type id
-     *
+     * 内容类型ID
      * @return content type id
      */
     byte getContentTypeId();
 
     /**
      * get content type
-     *
+     * 内容类型
      * @return content type
      */
     String getContentType();
 
     /**
      * create serializer
-     *
+     * 序列化字节流
      * @param url
      * @param output
      * @return serializer
@@ -57,7 +58,7 @@ public interface Serialization {
 
     /**
      * create deserializer
-     *
+     * 反序列化：根据输入流解析为ObjectInput对象
      * @param url
      * @param input
      * @return deserializer

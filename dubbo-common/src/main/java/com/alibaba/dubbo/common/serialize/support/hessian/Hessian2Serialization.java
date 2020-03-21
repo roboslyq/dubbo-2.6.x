@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * Hession2序列实现，在Dubbo中不是原生的使用Hession2序列化，而是进行了简单的包装实现。
+ */
 public class Hessian2Serialization implements Serialization {
 
     public static final byte ID = 2;

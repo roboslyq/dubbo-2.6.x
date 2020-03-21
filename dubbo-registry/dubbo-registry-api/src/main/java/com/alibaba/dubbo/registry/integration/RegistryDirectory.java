@@ -55,7 +55,7 @@ import java.util.Set;
 
 /**
  * RegistryDirectory
- *
+ * 目录服务，即服务提供者抽象。因为DUbbo注册到zk等注册中心就是一系列目录
  */
 public class RegistryDirectory<T> extends AbstractDirectory<T> implements NotifyListener {
 
@@ -707,7 +707,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     /**
      * The delegate class, which is mainly used to store the URL address sent by the registry,and can be reassembled on the basis of providerURL queryMap overrideMap for re-refer.
-     *
+     * Invoker代理类，实现了InvokerWrapper，具体的Invoker会使用此类进行包装。
      * @param <T>
      */
     private static class InvokerDelegate<T> extends InvokerWrapper<T> {

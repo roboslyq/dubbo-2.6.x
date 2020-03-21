@@ -124,8 +124,11 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
                     + " is DESTROYED, can not be invoked any more!");
         }
         RpcInvocation invocation = (RpcInvocation) inv;
+        // this = interface com.alibaba.dubbo.demo.DemoService -> dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-consumer&check=false&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&module=mo1&owner=luoyq&pid=9796&qos.port=33333&register.ip=192.168.1.108&remote.timestamp=1584756040918&revision=0.0.2&side=consumer&timestamp=1584756942121&version=0.0.2
         invocation.setInvoker(this);
         if (attachment != null && attachment.size() > 0) {
+            //0 = {Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry@3343} "interface" -> "com.alibaba.dubbo.demo.DemoService"
+            //1 = {Collections$UnmodifiableMap$UnmodifiableEntrySet$UnmodifiableEntry@3344} "group" -> "a"
             invocation.addAttachmentsIfAbsent(attachment);
         }
         Map<String, String> context = RpcContext.getContext().getAttachments();

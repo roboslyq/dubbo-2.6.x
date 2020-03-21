@@ -47,6 +47,11 @@ public abstract class AbstractCodec implements Codec2 {
         }
     }
 
+    /**
+     * 根据URL获取序列化实现
+     * @param channel
+     * @return
+     */
     protected Serialization getSerialization(Channel channel) {
         return CodecSupport.getSerialization(channel.getUrl());
     }

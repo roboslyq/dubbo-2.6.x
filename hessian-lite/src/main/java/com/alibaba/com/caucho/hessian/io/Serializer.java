@@ -52,6 +52,7 @@ import java.io.IOException;
 
 /**
  * Serializing an object.
+ * Dubbo框架序列化接口
  */
 public interface Serializer {
     public void writeObject(Object obj, AbstractHessianOutput out)
