@@ -69,12 +69,19 @@ public class Transporters {
                 .bind(url, handler);
     }
 
+    /**
+     * 客户端发起连接
+     * @param url
+     * @param handler
+     * @return
+     * @throws RemotingException
+     */
     public static Client connect(String url, ChannelHandler... handler) throws RemotingException {
         return connect(URL.valueOf(url), handler);
     }
 
     /**
-     * 客户端启动连接服务端入口
+     * 客户端启动连接服务端入口,<在HeaderExchanger中被调用>
      * @param url   DUBBO URL配置
      * @param handlers  ChannerlHanler
      * @return Client

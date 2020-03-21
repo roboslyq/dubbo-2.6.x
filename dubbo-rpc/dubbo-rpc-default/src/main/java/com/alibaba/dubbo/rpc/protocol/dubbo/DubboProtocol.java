@@ -54,6 +54,10 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * dubbo protocol support.
+ * 1、默认就是走 dubbo 协议，单一长连接，进行的是 NIO 异步通信，基于 hessian 作为序列化协议。使用的场景是：传输数据量小（每次请求在 100kb 以内），但是并发量很高。
+ * 2、为了要支持高并发场景，一般是服务提供者就几台机器，但是服务消费者有上百台，可能每天调用量达到上亿次！此时用长连接是最合适的，
+ *    就是跟每个服务消费者维持一个长连接就可以，可能总共就 100 个连接。然后后面直接基于长连接 NIO 异步通信，可以支撑高并发请求。
+ *    长连接，通俗点说，就是建立连接过后可以持续发送请求，无须再建立连接
  */
 public class DubboProtocol extends AbstractProtocol {
 
@@ -64,7 +68,6 @@ public class DubboProtocol extends AbstractProtocol {
     private static DubboProtocol INSTANCE;
     /**
      * 通信服务器集合
-     *
      * key: 服务器地址。格式为：host:port
      */
     private final Map<String, ExchangeServer> serverMap = new ConcurrentHashMap<String, ExchangeServer>(); // <host:port,Exchanger>
@@ -79,8 +82,11 @@ public class DubboProtocol extends AbstractProtocol {
     //consumer side export a stub service for dispatching event
     //servicekey-stubmethods
     private final ConcurrentMap<String, String> stubServiceMethodsMap = new ConcurrentHashMap<String, String>();
+    /**
+     * 匿名内部类：ExchangeHandler
+     */
     private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
-
+        //
         public Object reply(ExchangeChannel channel, Object message) throws RemotingException {
             if (message instanceof Invocation) {
                 Invocation inv = (Invocation) message;
@@ -161,6 +167,9 @@ public class DubboProtocol extends AbstractProtocol {
         }
     };
 
+    /**
+     * Dubbo构造函数
+     */
     public DubboProtocol() {
         INSTANCE = this;
     }
@@ -229,7 +238,24 @@ public class DubboProtocol extends AbstractProtocol {
      * 暴露服务，同时启动dubbo服务监听，默认是netty
      */
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
-        // url = dubbo://192.168.43.62:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.43.62&bind.port=20880&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&module=mo1&owner=luoyq&pid=7196&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583973438933&version=0.0.2
+        // url = dubbo://192.168.43.62:20880/com.alibaba.dubbo.demo.DemoService?
+        //      anyhost=true
+        //      &application=demo-
+        //      &bind.ip=192.168.43.62
+        //      &bind.port=20880
+        //      &dubbo=2.0.0
+        //      &generic=false
+        //      &group=a
+        //      &interface=com.alibaba.dubbo.demo.DemoService
+        //      &methods=sayHello
+        //      &module=mo1
+        //      &owner=luoyq
+        //      &pid=7196
+        //      &qos.port=22222
+        //      &revision=0.0.2
+        //      &side=provider
+        //      &timestamp=1583973438933
+        //      &version=0.0.2
         URL url = invoker.getUrl();
         // 获取服务标识，理解成服务坐标也行。由服务组名，服务名，服务版本号以及端口组成。比如：
         // demoGroup/com.alibaba.dubbo.demo.DemoService:1.0.1:20880
@@ -262,16 +288,20 @@ public class DubboProtocol extends AbstractProtocol {
         return exporter;
     }
 
+    /**
+     * 创建服务器
+     * @param url
+     */
     private void openServer(URL url) {
         // 获取 host:port，并将其作为服务器实例的 key，用于标识当前的服务器实例
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
         if (isServer) {
-            //访问缓存：key为服务器IP:port，例如：key="192.168.1.108:20880"
+            // 访问缓存：key为服务器IP:port，例如：key="192.168.1.108:20880"
             // 当第一个ServiceBean：<dubbo:service>被初始化时，此serverMap为空，所以server为空，则进入server==null分支。
             // 然后创建server并启动(在构造函数中实现启动并绑定端口)。如果不是第一个Bean进入，则进入另一个分支server.reset(url)。
-            //更新服务的部分信息即可。不需要重复启动。
+            // 更新服务的部分信息即可。不需要重复启动。
             ExchangeServer server = serverMap.get(key);
             //如果当前服务还没创建，则新建，如果已经创建，则跳过。
             if (server == null) {
@@ -294,7 +324,22 @@ public class DubboProtocol extends AbstractProtocol {
      */
     private ExchangeServer createServer(URL url) {
         // send readonly event when server closes, it's enabled by default
-        //dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&bind.ip=192.168.1.108&bind.port=20880&channel.readonly.sent=true&dubbo=2.0.0&generic=false&group=a&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&pid=9080&qos.port=22222&revision=0.0.2&side=provider&timestamp=1583509481089&version=0.0.2
+        //   dubbo://192.168.1.108:20880/com.alibaba.dubbo.demo.DemoService?
+        //   anyhost=true
+        //   &application=demo-provider
+        //   &bind.ip=192.168.1.108
+        //   &bind.port=20880
+        //   &channel.readonly.sent=true
+        //   &dubbo=2.0.0
+        //   &generic=false
+        //   &group=a
+        //   &interface=com.alibaba.dubbo.demo.DemoService
+        //   &methods=sayHello
+        //   &pid=9080&qos.port=22222
+        //   &revision=0.0.2
+        //   &side=provider
+        //   &timestamp=1583509481089
+        //   &version=0.0.2
         url = url.addParameterIfAbsent(Constants.CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString());
 
         // enable heartbeat by default-开启心跳检测

@@ -45,6 +45,8 @@ import static com.alibaba.dubbo.rpc.protocol.dubbo.CallbackServiceCodec.encodeIn
 
 /**
  * Dubbo codec.
+ * Dubbo编码解码器：
+ *
  */
 public class DubboCodec extends ExchangeCodec implements Codec2 {
 
@@ -85,6 +87,7 @@ public class DubboCodec extends ExchangeCodec implements Codec2 {
      * @return
      * @throws IOException
      */
+    //服务端解码器
     protected Object decodeBody(Channel channel, InputStream is, byte[] header) throws IOException {
         byte flag = header[2], proto = (byte) (flag & SERIALIZATION_MASK);
         Serialization s = CodecSupport.getSerialization(channel.getUrl(), proto);
@@ -228,11 +231,14 @@ public class DubboCodec extends ExchangeCodec implements Codec2 {
      * invoke:75, InvokerInvocationHandler (com.alibaba.dubbo.rpc.proxy)
      * sayHello:-1, proxy0 (com.alibaba.dubbo.common.bytecode)
      * main:43, Consumer (com.alibaba.dubbo.demo.consumer)
-     * @param channel NettyChannel
-     * @param out Hession2ObjectOutput
-     * @param data RpcInvocation
+     *
+     *
+     * @param channel NettyChannel(默认的通讯协议)
+     * @param out Hession2ObjectOutput(默认的序列化协议)
+     * @param data RpcInvocation(请求上下文)
      * @throws IOException
      */
+    //消费端编码器
     @Override
     protected void encodeRequestData(Channel channel, ObjectOutput out, Object data) throws IOException {
         RpcInvocation inv = (RpcInvocation) data;
@@ -240,17 +246,29 @@ public class DubboCodec extends ExchangeCodec implements Codec2 {
         out.writeUTF(inv.getAttachment(Constants.DUBBO_VERSION_KEY, DUBBO_VERSION));
         out.writeUTF(inv.getAttachment(Constants.PATH_KEY));
         out.writeUTF(inv.getAttachment(Constants.VERSION_KEY));
-
+        //服务提供者方法名称
         out.writeUTF(inv.getMethodName());
+        //参数类型
         out.writeUTF(ReflectUtils.getDesc(inv.getParameterTypes()));
+        //参数处理
         Object[] args = inv.getArguments();
         if (args != null)
             for (int i = 0; i < args.length; i++) {
-                out.writeObject(encodeInvocationArgument(channel, inv, i));
+                out.writeObject(
+                        //给每i个参数编码
+                        encodeInvocationArgument(channel, inv, i)
+                );
             }
         out.writeObject(inv.getAttachments());
     }
 
+    /**
+     * 服务提供者响应进行编码
+     * @param channel
+     * @param out
+     * @param data
+     * @throws IOException
+     */
     @Override
     protected void encodeResponseData(Channel channel, ObjectOutput out, Object data) throws IOException {
         Result result = (Result) data;

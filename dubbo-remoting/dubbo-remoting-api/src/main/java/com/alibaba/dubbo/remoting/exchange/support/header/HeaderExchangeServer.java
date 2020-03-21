@@ -218,6 +218,11 @@ public class HeaderExchangeServer implements ExchangeServer {
         reset(getUrl().addParameters(parameters.getParameters()));
     }
 
+    /**
+     * 发送信息
+     * @param message
+     * @throws RemotingException
+     */
     public void send(Object message) throws RemotingException {
         if (closed.get()) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send message " + message + ", cause: The server " + getLocalAddress() + " is closed!");

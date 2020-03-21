@@ -24,6 +24,7 @@ import java.io.OutputStream;
 
 /**
  * Hessian2 Object output.
+ * 默认的通信协议
  */
 public class Hessian2ObjectOutput implements ObjectOutput {
     private final Hessian2Output mH2o;

@@ -23,16 +23,33 @@ import com.alibaba.dubbo.remoting.RemotingException;
 import com.alibaba.dubbo.remoting.Server;
 import com.alibaba.dubbo.remoting.Transporter;
 
+/**
+ * 对Netty的包装
+ */
 public class NettyTransporter implements Transporter {
 
     public static final String NAME = "netty";
 
+    /**
+     * 服务端监听端口
+     * @param url     server url
+     * @param listener
+     * @return
+     * @throws RemotingException
+     */
     public Server bind(URL url, ChannelHandler listener) throws RemotingException {
         // listener 为DecodeChannelHandler。并且在构造器中实现服务启动，完成初始化
         // 创建 NettyServer
         return new NettyServer(url, listener);
     }
 
+    /**
+     * 客户端，向服务端发起连接
+     * @param url     server url
+     * @param listener
+     * @return
+     * @throws RemotingException
+     */
     public Client connect(URL url, ChannelHandler listener) throws RemotingException {
         return new NettyClient(url, listener);
     }

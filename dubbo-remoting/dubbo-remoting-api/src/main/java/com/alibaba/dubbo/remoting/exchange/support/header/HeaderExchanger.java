@@ -60,7 +60,8 @@ public class HeaderExchanger implements Exchanger {
         // 创建 HeaderExchangeServer 实例，该方法包含了多个逻辑，分别如下：
         //   1. new HeaderExchangeHandler(handler)
         //	 2. new DecodeHandler(new HeaderExchangeHandler(handler))
-        //   3. Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler)))
+        //   3. Transporters.bind(url, new DecodeHandler(new HeaderExchangeHandler(handler))):
+        // 其中第3步很关键,返回的是一个Client(默认实现是NettyClient)
         return new HeaderExchangeServer(Transporters.bind(url,
                                                             new DecodeHandler(
                                                                     new HeaderExchangeHandler(handler)

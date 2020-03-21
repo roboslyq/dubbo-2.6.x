@@ -39,6 +39,7 @@ import java.util.Set;
 
 /**
  * callback service helper
+ * 方法中参数为回调函数时编码/解码处理器
  */
 class CallbackServiceCodec {
     private static final Logger logger = LoggerFactory.getLogger(CallbackServiceCodec.class);
@@ -50,8 +51,16 @@ class CallbackServiceCodec {
     private static final byte CALLBACK_DESTROY = 0x2;
     private static final String INV_ATT_CALLBACK_KEY = "sys_callback_arg-";
 
+    /**
+     * 判断方法methodName中的和argIndex参数是不是回调函数
+     * @param url
+     * @param methodName
+     * @param argIndex
+     * @return
+     */
     private static byte isCallBack(URL url, String methodName, int argIndex) {
         // parameter callback rule: method-name.parameter-index(starting from 0).callback
+        // 参数为回调函数的规则是：method-name.parameter-index(starting from 0).callback
         byte isCallback = CALLBACK_NONE;
         if (url != null) {
             String callback = url.getParameter(methodName + "." + argIndex + ".callback");
@@ -242,9 +251,19 @@ class CallbackServiceCodec {
         }
     }
 
+    /**
+     * 给方法中第i个参数编码
+     * @param channel 通道
+     * @param inv 调用上下文
+     * @param paraIndex 第i个参数
+     * @return
+     * @throws IOException
+     */
     public static Object encodeInvocationArgument(Channel channel, RpcInvocation inv, int paraIndex) throws IOException {
         // get URL directly
+        // 获取URL
         URL url = inv.getInvoker() == null ? null : inv.getInvoker().getUrl();
+        //判断参数是不是回调函数
         byte callbackstatus = isCallBack(url, inv.getMethodName(), paraIndex);
         Object[] args = inv.getArguments();
         Class<?>[] pts = inv.getParameterTypes();
@@ -262,6 +281,16 @@ class CallbackServiceCodec {
         }
     }
 
+    /**
+     * 服务端对请求参数进行解码
+     * @param channel
+     * @param inv
+     * @param pts
+     * @param paraIndex
+     * @param inObject
+     * @return
+     * @throws IOException
+     */
     public static Object decodeInvocationArgument(Channel channel, RpcInvocation inv, Class<?>[] pts, int paraIndex, Object inObject) throws IOException {
         // if it's a callback, create proxy on client side, callback interface on client side can be invoked through channel
         // need get URL from channel and env when decode

@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * NettyClient.
+ * Netty客户端
  */
 public class NettyClient extends AbstractClient {
 
@@ -56,13 +57,27 @@ public class NettyClient extends AbstractClient {
     // 这里的 Channel 全限定名称为 org.jboss.netty.channel.Channel
     private volatile Channel channel; // volatile, please copy reference to use
 
+    /**
+     * 构造函数，调用父类的构造函数，在父类中通过模板方法，调用下面的doOpen()实现。从而启动客户端
+     * @param url 服务提供者URL
+     * @param handler 事件处理器。
+     * @throws RemotingException
+     */
     public NettyClient(final URL url, final ChannelHandler handler) throws RemotingException {
-        super(url, wrapChannelHandler(url, handler));
+        super(url,
+                wrapChannelHandler(url, handler) //构造事件转发模型(Dispatch)：对当前Handler进行包装
+        );
     }
 
+    /**
+     * 调用doOpen初始化客户端调用模型
+     * 重点注意：只是构造模型并未发起链接，具体连接由doConnect()执行
+     * @throws Throwable
+     */
     @Override
     protected void doOpen() throws Throwable {
         NettyHelper.setNettyLoggerFactory();
+        //创建Netty客户端启动实例bootstrap.
         bootstrap = new ClientBootstrap(channelFactory);
         // config
         // @see org.jboss.netty.channel.socket.SocketChannelConfig
@@ -70,6 +85,7 @@ public class NettyClient extends AbstractClient {
         bootstrap.setOption("tcpNoDelay", true);
         bootstrap.setOption("connectTimeoutMillis", getTimeout());
         //getUrl = dubbo://192.168.43.62:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-consumer&check=false&codec=dubbo&dubbo=2.0.0&generic=false&group=b&heartbeat=60000&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello&module=mo1&owner=luoyq&pid=7000&qos.port=33333&register.ip=192.168.43.62&remote.timestamp=1584664893538&revision=0.0.1&side=consumer&timestamp=1584665130868&version=0.0.1
+        //创建NettyClientHandler。
         final NettyHandler nettyHandler = new NettyHandler(getUrl(), this);
 
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
@@ -89,17 +105,26 @@ public class NettyClient extends AbstractClient {
         });
     }
 
+    /**
+     * 向服务器发起连接
+     * @throws Throwable
+     */
     protected void doConnect() throws Throwable {
         long start = System.currentTimeMillis();
+//        调用bootstrap.connect方法发起TCP连接。
         ChannelFuture future = bootstrap.connect(getConnectAddress());
         try {
+//            future.awaitUninterruptibly，连接事件只等待getConnectTimeout() 秒
             boolean ret = future.awaitUninterruptibly(getConnectTimeout(), TimeUnit.MILLISECONDS);
-
+            //连接成功
             if (ret && future.isSuccess()) {
+                //获取channel
                 Channel newChannel = future.getChannel();
+                //设置channel可读可写
                 newChannel.setInterestOps(Channel.OP_READ_WRITE);
                 try {
                     // Close old channel
+                    //关闭旧Channel
                     Channel oldChannel = NettyClient.this.channel; // copy reference
                     if (oldChannel != null) {
                         try {
@@ -119,6 +144,7 @@ public class NettyClient extends AbstractClient {
                             }
                             newChannel.close();
                         } finally {
+                            //将新的channel设置为当前channel
                             NettyClient.this.channel = null;
                             NettyChannel.removeChannelIfDisconnected(newChannel);
                         }
@@ -142,6 +168,10 @@ public class NettyClient extends AbstractClient {
         }
     }
 
+    /**
+     * 关闭连接
+     * @throws Throwable
+     */
     @Override
     protected void doDisConnect() throws Throwable {
         try {

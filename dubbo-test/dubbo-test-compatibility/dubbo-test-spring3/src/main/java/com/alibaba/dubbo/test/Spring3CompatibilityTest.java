@@ -40,7 +40,12 @@ public class Spring3CompatibilityTest {
 
         DemoService demoService = consumerConfiguration.getDemoService();
 
-        String value = demoService.sayHello("Mercy");
+        String value = null;
+        try {
+            value = demoService.sayHello("Mercy");
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
 
         Assert.isTrue("DefaultDemoService - sayHell() : Mercy".equals(value), "Test is failed!");
 

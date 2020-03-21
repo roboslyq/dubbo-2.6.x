@@ -65,18 +65,26 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
     // the last successed connected time
     private long lastConnectedTime = System.currentTimeMillis();
 
-
+    /**
+     * 所有Client的抽象类《模板方法设计》
+     * 1、doOpen():打开客户端连接(即发起客户端与服务端的连接信息)
+     * @param url
+     * @param handler
+     * @throws RemotingException
+     */
     public AbstractClient(URL url, ChannelHandler handler) throws RemotingException {
+        //调用父类的构造器，初始化url、ChannelHandler。
         super(url, handler);
 
+        // 初始化send_reconnect 、shutdown_timeout、reconnect_warning_period
         send_reconnect = url.getParameter(Constants.SEND_RECONNECT_KEY, false);
-
         shutdown_timeout = url.getParameter(Constants.SHUTDOWN_TIMEOUT_KEY, Constants.DEFAULT_SHUTDOWN_TIMEOUT);
-
         // The default reconnection interval is 2s, 1800 means warning interval is 1 hour.
+        //（默认1小时打印一次日志）
         reconnect_warning_period = url.getParameter("reconnect.waring.period", 1800);
 
         try {
+            //调用doOpen初始化客户端调用模型
             doOpen();
         } catch (Throwable t) {
             close();
@@ -111,6 +119,12 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
                 .getDefaultExtension().remove(Constants.CONSUMER_SIDE, Integer.toString(url.getPort()));
     }
 
+    /**
+     * 包装Handler
+     * @param url
+     * @param handler
+     * @return
+     */
     protected static ChannelHandler wrapChannelHandler(URL url, ChannelHandler handler) {
         url = ExecutorUtil.setThreadName(url, CLIENT_THREAD_POOL_NAME);
         url = url.addParameterIfAbsent(Constants.THREADPOOL_KEY, Constants.DEFAULT_CLIENT_THREADPOOL);
@@ -244,6 +258,12 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         return channel.hasAttribute(key);
     }
 
+    /**
+     * 发送消息
+     * @param message
+     * @param sent    already sent to socket?
+     * @throws RemotingException
+     */
     public void send(Object message, boolean sent) throws RemotingException {
         if (send_reconnect && !isConnected()) {
             connect();
@@ -256,6 +276,10 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         channel.send(message, sent);
     }
 
+    /**
+     * 连接服务端
+     * @throws RemotingException
+     */
     protected void connect() throws RemotingException {
         connectLock.lock();
         try {
@@ -263,6 +287,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
                 return;
             }
             initConnectStatusCheckCommand();
+            //发起连接
             doConnect();
             if (!isConnected()) {
                 throw new RemotingException(this, "Failed connect to server " + getRemoteAddress() + " from " + getClass().getSimpleName() + " "
@@ -288,6 +313,9 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         }
     }
 
+    /**
+     * 关闭连接
+     */
     public void disconnect() {
         connectLock.lock();
         try {
@@ -310,8 +338,14 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         }
     }
 
+    /**
+     * 重新连接
+     * @throws RemotingException
+     */
     public void reconnect() throws RemotingException {
+        //先关闭连接
         disconnect();
+        //发起新连接
         connect();
     }
 
