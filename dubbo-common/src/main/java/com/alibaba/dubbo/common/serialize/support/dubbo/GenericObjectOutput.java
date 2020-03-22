@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Generic Object Output.
+ * DUBBO序列化实现
  */
 public class GenericObjectOutput extends GenericDataOutput implements ObjectOutput {
     private final boolean isAllowNonSerializable;

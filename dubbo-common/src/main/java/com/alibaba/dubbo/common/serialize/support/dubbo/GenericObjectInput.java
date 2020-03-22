@@ -28,6 +28,7 @@ import java.util.List;
 
 /**
  * Generic Object Input.
+ * DUBBO反序列化实现
  */
 public class GenericObjectInput extends GenericDataInput implements ObjectInput {
     private static Object SKIPPED_OBJECT = new Object();

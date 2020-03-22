@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * DUBBO序列化实现
+ */
 public class DubboSerialization implements Serialization {
 
     public byte getContentTypeId() {

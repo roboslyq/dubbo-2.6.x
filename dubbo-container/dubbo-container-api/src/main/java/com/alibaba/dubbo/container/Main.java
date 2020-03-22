@@ -32,34 +32,52 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Main. (API, Static, ThreadSafe)
+ * Dubbo Standalone模式启动，脱离tomcat,weblogic,jboss等servlet容器。
  */
 public class Main {
 
     public static final String CONTAINER_KEY = "dubbo.container";
-
+    /**
+     * 优雅停机
+     */
     public static final String SHUTDOWN_HOOK_KEY = "dubbo.shutdown.hook";
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+    /**
+     * 获取容器，Dubbo没有实现自己的容器，而是借用了SpringFrameWork框架的实现。
+     */
     private static final ExtensionLoader<Container> loader = ExtensionLoader.getExtensionLoader(Container.class);
 
     private static final ReentrantLock LOCK = new ReentrantLock();
 
     private static final Condition STOP = LOCK.newCondition();
 
+    /**
+     * 入口启动类：
+     * 如果是自己的项目，可以通过如下方式进行调用：
+     *  public class ContainerMain {
+     *      public static void main(String[] args) {
+     *        Main.main(args);
+     *      }
+     *  }
+     * @param args
+     */
     public static void main(String[] args) {
         try {
+            //如果参数为空
             if (args == null || args.length == 0) {
+                // config = args = "spring"
                 String config = ConfigUtils.getProperty(CONTAINER_KEY, loader.getDefaultExtensionName());
                 args = Constants.COMMA_SPLIT_PATTERN.split(config);
             }
-
+            //获取容器(默认只有一个Spring容器)
             final List<Container> containers = new ArrayList<Container>();
             for (int i = 0; i < args.length; i++) {
                 containers.add(loader.getExtension(args[i]));
             }
             logger.info("Use container type(" + Arrays.toString(args) + ") to run dubbo serivce.");
-
+            //添加停机钩子函数
             if ("true".equals(System.getProperty(SHUTDOWN_HOOK_KEY))) {
                 Runtime.getRuntime().addShutdownHook(new Thread() {
                     public void run() {

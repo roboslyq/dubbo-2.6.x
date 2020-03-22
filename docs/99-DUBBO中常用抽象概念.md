@@ -2,7 +2,7 @@
 
 
 
-# 1 对于registry，提供者没有这个，消费者才有。为什么?
+# 1 对于Registry，提供者没有这个，消费者才有。为什么?
 因为只有消费者才需要去注册中心拿到provide的信息，而provider是不需要关注的，provider只需要去注册就好。在RegistryProtocol的export方法中，可以看到在registry方法里面直接在注册中心写信息就够了。
 
 
@@ -18,7 +18,7 @@
 
 # 3 dubbo里面经常说的FailoverClusterinvoer、BroadcastClusterInvoker等等这些Cluster是啥意思？
 
-首先cluster接口只有一个方法，就是通过join得到一个invoker，不要被名字误导了，虽然叫cluster，其实没有保存多个invoker，并不是保存了一个集合。虽然叫join，但是其实是利用spi根据配置得到不同的cluster，可以理解成：cluster的join就是根据配置得到不同ClusterInvoker实现。当然还有一个MockClusterWrapper，所以所有的Cluster其实都被这个Wrapper都包了一层，这个是dubbo的spi注入做的，看名字就知道加这一层是为了提前拦截，方便mock测试用的。
+​		首先cluster接口只有一个方法，就是通过join得到一个`invoker`，不要被名字误导了，虽然叫`cluster`，其实没有保存多个invoker，并不是保存了一个集合（此集合保存在具体的`Invoker`中）。虽然叫join，但是其实是利用spi根据配置得到不同的cluster，可以理解成：cluster的join就是根据配置得到不同ClusterInvoker实现。当然还有一个`MockClusterWrapper`，所以所有的Cluster其实都被这个Wrapper都包了一层，这个是dubbo的spi注入做的，看名字就知道加这一层是为了提前拦截，方便mock测试用的。
 
 
 
@@ -41,8 +41,8 @@ childchanged是在订阅的时候注册的，也就是doSubscribe里面。当pro
 
 
 # 6 refreshInvoker 里面做了啥？
-前面只是讲到得到了一个provider的url、list，并没有得到一个provider的实体，其实有了provider，需要使用dubboProcol的refer去真正引用一个service，与service建立长链接关系。底层建立transport层的通信关系，我是使用netty4看的有时间可以写写。
-至于序列化那块，默认用的hessian，比较繁琐。dubbo没有用protobuf，如果用的话，性能更好，并且代码应该也不需要写这么多。所以没有细研究了
+前面只是讲到得到了一个provider的url、list，并没有得到一个provider的实体，其实有了provider，需要使用dubboProcol的refer去真正引用一个service，与service建立长链接关系。底层建立transport层的通信关系。
+至于序列化那块，默认用的hessian，比较繁琐。dubbo没有用protobuf，如果用的话，性能更好，并且代码应该也不需要写这么多。
 
 
 
@@ -52,8 +52,6 @@ childchanged是在订阅的时候注册的，也就是doSubscribe里面。当pro
 与三个registry建立长链接，创建consumer目录上自己的信息，这个叫注册。
 然后订阅provider的信息，并且把provider的url信息拿到后refreshInvoker
 与这些dubbo-invoker建立连接关系
-
-
 
 # 8 那么问题来了，refer方法结果是dubbo-invoker吗？如果是的话 就用不到cluster、loadbalance这些了。
 在doRefer方法的最后，还是调用了cluster.join(directory)得到invoke返回回去。也就是最终返回了三个MockClusterWrapper，里面是FailoverClusterInvoker（默认spi）
@@ -204,7 +202,361 @@ java序列化：主要是采用JDK自带的Java序列化实现，性能很不理
 
 dubbo序列化主要由Serialization(序列化策略)、DataInput(反序列化，二进制->对象)、DataOutput（序列化，对象->二进制流） 来进行数据的序列化与反序列化。其关系类图为：
 
+# 18、本地存根和本地伪装
 
+##　本地存根(Stub)
+
+典型的 RPC 调用客户端是依赖并且只依赖接口编程来进行远程调用的。在真正发起远程调用之前，用户往往需要做一些预处理的工作，比如提前校验参数。在拿到返回调用结果之后，用户可能需要缓存结果，或者是在调用失败的时候构造容错数据，而不是简单的抛出异常。
+
+这个时候，用户可以编写出类似以下的代码来处理上面提出的这些场景：
+
+```java
+try {
+    preProcess();
+    return service.invoke(...);
+} catch (Throwable e) {
+    return mockValue;
+} finally {
+    postProcess();
+}
+```
+
+类似的，用户也可以通过面向切面编程 *AOP* 的高级技巧来解决上面的诉求，比如通过 *Spring AOP* 的方式可以通过类似下面的这段配置来完成。使用 *AOP* 的技巧相比上面的代码来说，避免了容错处理等与业务无关的代码对业务代码的侵入，使得业务处理主逻辑更简洁。
+
+```xml
+<bean id="demo-service-stub" class="org.apache.dubbo.demo.DemoServiceStub"/>
+<bean id="demo-service-mock" class="org.apache.dubbo.demo.DemoServiceMock"/>
+<aop:config>
+    <aop:aspect id="stub" ref="demo-service-stub">
+        <aop:pointcut id="stubPointcut" expression="execution(* org.apache.dubbo.samples.DemoService+.*(..))"/>
+        <aop:before method="preProcess" pointcut-ref="stubPointcut"/>
+        <aop:after-returning method="postProcess" pointcut-ref="stubPointcut"/>
+    </aop:aspect>
+    <aop:aspect id="mock" ref="demo-service-mock">
+        <aop:pointcut id="mockPointcut" expression="execution(* org.apache.dubbo.samples.DemoService+.*(..))"/>
+        <aop:after-throwing method="mock" pointcut-ref="mockPointcut"/>
+    </aop:aspect>
+</aop:config>
+```
+
+为了进一步的方便用户做 Dubbo 开发，框架提出了本地存根 *Stub* 和本地伪装 *Mock* 的概念。通过约定大于配置的理念，进一步的简化了配置，使用起来更加方便，并且不依赖额外的 *AOP* 框架就达到了 *AOP* 的效果。
+
+**本地存根的工作方式与 *AOP* 的 around advice 类似，而本地伪装的工作方式等同于 *AOP* 中的 after-throwing advice，也就是说，只有当远程调用发生 *exception* 的时候才会执行本地伪装**。本地存根和本地伪装的工作流程如下图所示：
+
+ ![dubbo-mock-stub-flow](./images/99/1.png) 
+
+
+
+要和框架在一起工作，本地存根的实现需要遵循一些与框架事先做出的约定：
+
+1. 首先本地存根 *Stub* 是服务接口的一个实现
+2. 本地存根的实现需要提供一个拷贝构造方法，方便框架将远程调用的 *Proxy* 对象注入进来
+3. 同样的，本地存根需要提供服务接口中所有方法的实现。在本例中，需要实现 *sayHello* 方法
+4. 在真正发起远程调用之前，用户可以在本地执行一些操作。在本例中，在日志中记录传入的参数
+5. 通过框架传入的 *Proxy* 对象真正发起远程调用
+6. 在远程调用结束后，也可以加入本地代码的执行。在本例中，在日志中记录远程调用的返回结果
+7. 如果发生错误的时候，也可以做一些错误恢复的动作。在本例中，在日志中记录异常。当然，如果提供了本地伪装的话，*catch* 中的逻辑是可以省略掉的
+
+其中步骤 4、步骤 6、和步骤 7 共同构建了等同于面向切面编程中的概念，分别对应于 **before**、**after-returning**、以及 **after-throwing**。
+
+一个示例Demo如下：
+
+```java
+/**
+ * @author luo.yongqian
+ */
+// 1、实现接口
+public class DemoServiceStub implements DemoService {
+    //被代理的服务接口<具体实现是Proxy0>
+    private DemoService demoService;
+    
+	// 2、有一个拷贝构造方法函数，在构造函数中将Proxy0实例赋值，完成初始化
+    public DemoServiceStub(DemoService demoService) {
+        this.demoService = demoService;
+
+    }
+	//3、实现接口方法
+    @Override
+    public String sayHello(String name) throws Throwable {
+        //实现前置拦截器效果
+        System.out.println("before inoker...");
+        //调用服务
+        String res = demoService.sayHello(name);
+        //实现后置拦截器效果
+        System.out.println("receive response from providre: " + name);
+        return res;
+    }
+
+    @Override
+    public String sayHelloMock(int num) throws Throwable {
+        System.out.println("before inoker...");
+        String res = demoService.sayHelloMock(num);
+        System.out.println("receive response from providre: " + num);
+        return res;
+    }
+
+}
+```
+
+*DemoServiceStub* 运行在客户端，要使用本地存根的话，还需要在 *stub-consumer.xml* 中配置属性 *stub*。可以简单的通过指定 *stub="true"* 来告诉 Dubbo 框架使用本地存根，这个时候，本地存根的包名需要和服务接口的包名一致，类名必须在服务接口的类名后加上 **Stub** 的后缀。例如，当服务接口名是 *org.apache.dubbo.samples.stub.api.DemoService* 时，本地存根的全类名应该是 *org.apache.dubbo.samples.stub.api.DemoServiceStub*。
+
+```xml
+<dubbo:reference id="demoService" check="false" interface="org.apache.dubbo.samples.stub.api.DemoService" stub="true"/>
+```
+
+如果不希望使用默认的命名规则，也可以直接通过 *stub* 属性来指定本地存根的全类名。
+
+```xml
+<dubbo:reference id="demoService" check="false" interface="org.apache.dubbo.samples.stub.api.DemoService" stub="org.apache.dubbo.samples.stub.impl.DemoStub"/>
+```
+
+启动服务端 *StubProvider* 后，再运行客户端 *StubConsumer*，可以通过观察客户端的日志来验证本地存根的运行结果。
+
+```bash
+[09/04/19 11:52:21:021 CST] main  INFO api.DemoServiceStub: before execute remote service, parameter: dubbo
+[09/04/19 11:52:21:021 CST] main  INFO api.DemoServiceStub: after execute remote service, result: greeting dubbo
+[09/04/19 11:52:21:021 CST] main  INFO stub.StubConsumer: result: greeting dubbo
+```
+
+
+
+## 本地伪装(Mock)
+
+1. Mock 是 Stub 的一个子集，便于服务提供方在客户端执行容错逻辑，因经常需要在出现 RpcException (比如网络失败，超时等)时进行容错，而在出现业务异常(比如登录用户名密码错误)时不需要容错，如果用 Stub，可能就需要捕获并依赖 RpcException 类，而用 Mock 就可以不依赖 RpcException，因为**它的约定就是只有出现 RpcException 时才执行**。 [↩︎](http://dubbo.apache.org/zh-cn/docs/user/demos/local-mock.html#fnref1)
+2. 在 interface 旁放一个 Mock 实现，它实现 BarService 接口，并有一个无参构造函数 [↩︎](http://dubbo.apache.org/zh-cn/docs/user/demos/local-mock.html#fnref2)
+3. 代码示例：
+
+```java
+//1、实现接口
+public class DemoServiceMock implements DemoService {
+    //2、默认的无参构造函数(可以显示编写也可以使用java默认)，但必须要有无参构造函数，否则会报错导致系统无法启动。
+    //3、实现接口中的所有方法
+    @Override
+    public String sayHello(String name) throws Throwable {
+        System.out.println("start mock ...");
+        return "系统繁忙(Mock返回)";
+    }
+    
+    @Override
+    public String sayHelloMock(int num) throws Throwable {
+        System.out.println("start mock ...");
+        return "系统繁忙(Mock返回)";
+    }
+}
+```
+
+
+
+# 19 Dubbo能否脱离Spring独立运行？
+
+不能。Dubbo对Spring是强依赖，但必须依赖的仅仅是SpringFrameWork的核心框架(**最小依赖**)：
+
+- com.alibaba:dubbo:2.6.1  
+
+  -  commons-logging:commons-logging:1.2  
+  - org.springframework:**spring-beans**:5.1.4.RELEASE  
+    - org.springframework:spring-core:5.1.4.RELEASE  
+  - org.springframework:**spring-context**:5.1.4.RELEASE  
+    - org.springframework:spring-aop:5.1.4.RELEASE  
+    - org.springframework:spring-beans:5.1.4.RELEASE  
+    - org.springframework:spring-core:5.1.4.RELEASE  
+    - org.springframework:spring-expression:5.1.4.RELEASE  
+  - org.springframework:**spring-aop**:5.1.4.RELEASE  
+    - org.springframework:spring-beans:5.1.4.RELEASE  
+  - org.springframework:**spring-core**:5.1.4.RELEASE  
+    - org.springframework:spring-core:5.1.4.RELEASE  
+    - org.springframework:spring-jcl:5.1.4.RELEASE  
+  - org.springframework:**spring-expression**:5.1.4.RELEASE  
+    - org.springframework:spring-core:5.1.4.RELEASE  
+  - org.javassist:javassist:3.20.0-GA  
+  - org.jboss.netty:netty:3.2.5.Final  
+  - org.objenesis:objenesis:2.2 
+
+  
+
+但Dubbo可以脱离tomcat等servlet容器独立运行。在`2.6.1`版本下，最小依导入依赖如下：
+
+```xml
+<dependencies>
+        <!-- alibaba demo -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>dubbo</artifactId>
+            <version>2.6.1</version>
+        </dependency>
+        <!-- http://curator.apache.org/index.html
+         Apache Curator是Apache ZooKeeper的Java / JVM客户端库，Apache ZooKeeper是一种分布式协调服务。它包括一个高级API框架和实用程序，使Apache ZooKeeper更容易和更可靠。
+         -->
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+            <version>${curator_version}</version>
+        </dependency>
+    </dependencies>
+```
+
+# 20、默认的Filter有哪些？如果Provider和Service都配置了相同的Filter会不会覆盖？
+
+Filter链构造在类`com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper`中完成。
+
+- 默认的Filter如下列表
+  - filters = {ArrayList@2255}  size = 8
+    -  0 = {EchoFilter@2263} 
+    -  1 = {ClassLoaderFilter@2264} 
+    -  2 = {GenericFilter@2265} 
+    -  3 = {ContextFilter@2266} 
+    -  4 = {TraceFilter@2267} 
+    -  5 = {TimeoutFilter@2268} 
+    -  6 = {MonitorFilter@2269} 
+    -  7 = {ExceptionFilter@2270} 
+- 不会覆盖，而是出现两次，调用两次。例如在配置中加入如下配置：
+
+```xml
+<!-- dubbo provider: 提供者全局配置-->
+<dubbo:provider delay="0" filter="providerFilterDemo"></dubbo:provider>
+<!-- declare the service interface to be exported -->
+<dubbo:service
+    protocol="p1"
+    id="a"
+    interface="com.alibaba.dubbo.demo.DemoService"
+    ref="demoService"
+    version="0.0.2"
+    group="a"
+    filter="providerFilterDemo"
+/>
+```
+
+此时`Filter`列表为：
+
+- filters = {ArrayList@2255}  size = 10
+  -  0 = {EchoFilter@2263} 
+  -  1 = {ClassLoaderFilter@2264} 
+  -  2 = {GenericFilter@2265} 
+  -  3 = {ContextFilter@2266} 
+  -  4 = {TraceFilter@2267} 
+  -  5 = {TimeoutFilter@2268} 
+  -  6 = {MonitorFilter@2269} 
+  -  7 = {ExceptionFilter@2270} 
+  - **8 = {ProviderFilterDemo@2256} **
+  -  **9 = {ProviderFilterDemo@2256} **
+
+服务提供方和服务消费方调用过程拦截，Dubbo 本身的大多功能均基于此扩展点实现，每次远程方法执行，该拦截都会被执行，请注意对性能的影响。
+
+约定：
+
+- 用户自定义 filter 默认在内置 filter 之后。
+- 特殊值 `default`，表示缺省扩展点插入的位置。比如：`filter="xxx,default,yyy"`，表示 `xxx` 在缺省 filter 之前，`yyy` 在缺省 filter 之后。
+- 特殊符号 `-`，表示剔除。比如：`filter="-foo1"`，剔除添加缺省扩展点 `foo1`。比如：`filter="-default"`，剔除添加所有缺省扩展点。
+- provider 和 service 同时配置的 filter 时，累加所有 filter，而不是覆盖。比如：`` 和 ``，则 `xxx`,`yyy`,`aaa`,`bbb` 均会生效。如果要覆盖，需配置：``
+
+# 21、Dubbo为什么要自己实现Container？具体实现有哪些?
+
+服务容器(`Container`)是一个`standalone`的启动程序，因为后台服务不需要Tomcat或JBoss等Web容器的功能，如果硬要用Web容器去加载服务提供方，增加复杂性，也浪费资源。
+服务容器只是一个简单的Main方法，并加载一个简单的Spring容器，用于暴露服务。
+服务容器的加载内容可以扩展，内置了spring, jetty, log4j等加载，可通过Container扩展点进行扩展，参见：`Container`。
+
+- Spring Container
+
+ 这个容器是必须的，不能少的。如果少了就不能解析Dubbo配置文件，因此也不对对外提供服务。
+
+  自动加载META-INF/spring目录下的所有Spring配置。
+  配置：(配在java命令-D参数或者dubbo.properties中)
+    dubbo.spring.config=classpath*:META-INF/spring/*.xml ----配置spring配置加载位置
+
+- Log4j Container
+
+  自动配置log4j的配置，在多进程启动时，自动给日志文件按进程分目录。
+  配置：(配在java命令-D参数或者dubbo.properties中)
+    dubbo.log4j.file=/foo/bar.log ----配置日志文件路径
+    dubbo.log4j.level=WARN ----配置日志级别
+    dubbo.log4j.subdirectory=20880 ----配置日志子目录，用于多进程启动，避免冲突
+
+- Logback Container
+
+  与Log4j Container类似
+
+## 容器启动
+
+如：(缺省只加载spring)
+java com.alibaba.dubbo.container.Main
+
+或：(通过main函数参数传入要加载的容器)
+java com.alibaba.dubbo.container.Main spring jetty log4j
+
+或：(通过JVM启动参数传入要加载的容器)
+java com.alibaba.dubbo.container.Main -Ddubbo.container=spring,jetty,log4j
+
+或：(通过classpath下的dubbo.properties配置传入要加载的容器)
+dubbo.properties
+dubbo.container=spring,jetty,log4j
+
+# Dubbo如何实现优雅停机？
+
+基础java中的shutdown hook。在`AbstractConfig`类中实现：
+
+```java
+    /**
+     * 添加系统关闭钩子，进行相关销毁操作
+     */
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            public void run() {
+                if (logger.isInfoEnabled()) {
+                    logger.info("Run shutdown hook now.");
+                }
+                ProtocolConfig.destroyAll();
+            }
+        }, "DubboShutdownHook"));
+    }
+
+```
+
+因此，如果想要实现优雅停，不要使用kill -9 命令，因为这会跳过钩子函数直接杀死进程。而应该使用kill默认或者kill -15 。
+
+# 22、Dubbo多进程启动是什么？端口冲突怎么处理？
+
+Dubbo多进程是指在一台服务器，一个Dubbo服务(应用/项目)启动多次(多个进程)，对外提供服务。
+
+如果一个Dubbo服务启动多次，端口已经被占用了怎么办？很简单，Dubbo集成了Spring，因此可以通过Spring配置文件的点位符功能 ，在启动时指定端口的相关参数 ，对当前启动的监听端口进行指定。
+
+例如：
+
+配置文件：
+
+```xml
+< beans xmlns = "http://www.springframework.org/schema/beans"
+     xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:dubbo = "http://repo.alibaba-inc.com/schema/dubbo"
+     xsi:schemaLocation = "http://www.springframework.org/schema/beanshttp://www.springframework.org/schema/beans/spring-beans.xsdhttp://repo.alibaba-inc.com/schema/dubbohttp://repo.alibaba-inc.com/schema/dubbo/dubbo-component.xsd" >
+     <!-- 使用Spring自带的占位符替换功能 -->
+     < bean class = "org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
+         <!-- 系统-D参数覆盖 -->
+         < property name = "systemPropertiesModeName" value = "SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+         <!-- 指定properties配置所在位置 -->
+         < property name = "location" value = "classpath:xxx.properties" />
+     </ bean >
+ 
+     <!-- 使用${}引用配置项 -->
+     < dubbo:provider port = "${dubbo.service.server.port}" />
+ 
+</ beans >
+
+```
+
+
+
+```shell
+`java -Ddubbo.service.server.port=20881`
+```
+
+# 23、Dubbo多进程启动，日志怎么处理？是不是混在一起？
+
+Dubbo有一个模块是Container的子模块：
+
+- dubbo-container-logback
+- dubbo-container-log4j
+
+在些模块中实现了多进程时对应多个日志文件。即不同的Dubbo进程有不同的日志文件，互不干扰。
 
 # 参考资料
 
@@ -213,3 +565,5 @@ dubbo序列化主要由Serialization(序列化策略)、DataInput(反序列化�
 [SPI Adaptive]( https://segmentfault.com/a/1190000020384210 )
 
 [序列化协议]( https://www.cnblogs.com/jameszheng/p/10271341.html )
+
+[本地存根STUB与MOCK]( http://dubbo.apache.org/zh-cn/blog/dubbo-stub-mock.html )
