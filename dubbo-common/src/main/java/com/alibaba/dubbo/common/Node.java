@@ -18,7 +18,14 @@ package com.alibaba.dubbo.common;
 
 /**
  * Node. (API/SPI, Prototype, ThreadSafe)
- * Invoker的父接口
+ *
+ * 1、Dubbo中的一个核心抽象叫“URL”,URL基本封装了所有信息。详情可以参考{@link URL}
+ * 2、既然URL如此重要，因此需要一个通用接口，来获取URL信息。此接口便是Node。
+ * 3、目前有4种类型，实现了Node接口
+ *  1) Registry
+ *  2) Monitor
+ *  3) Directory
+ *  4) Invoker
  */
 public interface Node {
 

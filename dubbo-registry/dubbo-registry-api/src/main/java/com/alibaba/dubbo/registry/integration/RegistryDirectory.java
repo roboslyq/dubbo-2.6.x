@@ -55,7 +55,9 @@ import java.util.Set;
 
 /**
  * RegistryDirectory
- * 目录服务，即服务提供者抽象。因为DUbbo注册到zk等注册中心就是一系列目录
+ * 1、目录服务，即服务提供者抽象。因为DUbbo注册到zk等注册中心就是一系列目录
+ * 2、此类继承了Directory接口，同时也实现了NotifyListener接口。因此，RegistryDirectory也是一个监听器。
+ * 可以在服务发生变更时接收到变更通知，从而更新相关的服务信息。
  */
 public class RegistryDirectory<T> extends AbstractDirectory<T> implements NotifyListener {
 

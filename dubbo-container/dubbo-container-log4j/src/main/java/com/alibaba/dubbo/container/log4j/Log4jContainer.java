@@ -61,6 +61,8 @@ public class Log4jContainer implements Container {
         String subdirectory = ConfigUtils.getProperty(LOG4J_SUBDIRECTORY);
         if (subdirectory != null && subdirectory.length() > 0) {
             Enumeration<org.apache.log4j.Logger> ls = LogManager.getCurrentLoggers();
+            // 以下循环,目的是为了找出log4j配置文件中的FileAppender元素,通过给子目录subdirectory设置不同值,从而实现不
+            // 同进程间的日志文件隔离.
             while (ls.hasMoreElements()) {
                 org.apache.log4j.Logger l = ls.nextElement();
                 if (l != null) {

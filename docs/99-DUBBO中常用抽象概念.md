@@ -490,6 +490,10 @@ java com.alibaba.dubbo.container.Main -Ddubbo.container=spring,jetty,log4j
 dubbo.properties
 dubbo.container=spring,jetty,log4j
 
+
+
+
+
 # Dubbo如何实现优雅停机？
 
 基础java中的shutdown hook。在`AbstractConfig`类中实现：
@@ -567,3 +571,5 @@ Dubbo有一个模块是Container的子模块：
 [序列化协议]( https://www.cnblogs.com/jameszheng/p/10271341.html )
 
 [本地存根STUB与MOCK]( http://dubbo.apache.org/zh-cn/blog/dubbo-stub-mock.html )
+
+[Dubbo 容器(Container)]( https://blog.csdn.net/u012425586/article/details/84827130?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task )

@@ -33,6 +33,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Main. (API, Static, ThreadSafe)
  * Dubbo Standalone模式启动，脱离tomcat,weblogic,jboss等servlet容器。
+ * 1、实现优雅停机
+ *   通过钩子 Runtime.getRuntime().addShutdownHook来实现优雅停机.
+ * 2、支持通过启动参数来加载容器扩展点：cntainers.add(loader.getExtension(args[i]))。
+ * 3、在容器启动完毕之后执行一些初始化动作(如果仅仅使用dubbo而没有其它方面的特殊需求，可以使用该类作为程序启动类)。
+ * 4、Dubbo强依赖于Spring(Spring framework)基础框架的IOC和AOP，因为dubbo没有实现自己的容器。
+ * 5、没有类似spring boot 的CommandLineRunner 接口，
  */
 public class Main {
 
@@ -74,10 +80,11 @@ public class Main {
             //获取容器(默认只有一个Spring容器)
             final List<Container> containers = new ArrayList<Container>();
             for (int i = 0; i < args.length; i++) {
+                //容器的扩展点加载《用户可以自定义容器》
                 containers.add(loader.getExtension(args[i]));
             }
             logger.info("Use container type(" + Arrays.toString(args) + ") to run dubbo serivce.");
-            //添加停机钩子函数
+            //给每个容器添加停机钩子函数
             if ("true".equals(System.getProperty(SHUTDOWN_HOOK_KEY))) {
                 Runtime.getRuntime().addShutdownHook(new Thread() {
                     public void run() {
@@ -98,7 +105,7 @@ public class Main {
                     }
                 });
             }
-
+            // 逐个启动容器
             for (Container container : containers) {
                 container.start();
                 logger.info("Dubbo " + container.getClass().getSimpleName() + " started!");

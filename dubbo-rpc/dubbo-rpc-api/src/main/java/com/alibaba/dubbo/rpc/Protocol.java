@@ -22,6 +22,8 @@ import com.alibaba.dubbo.common.extension.SPI;
 
 /**
  * Protocol. (API/SPI, Singleton, ThreadSafe)
+ * 官方介绍：封装RPC调用，以Invocation, Result为中心，扩展接口为Protocol, Invoker, Exporter；
+ * 因此，Protocol并不仅仅是表面英文意思：协议，而是包含了整个RPC相关抽象。
  */
 @SPI("dubbo")
 public interface Protocol {

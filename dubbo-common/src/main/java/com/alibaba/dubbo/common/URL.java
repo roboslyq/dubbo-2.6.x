@@ -64,31 +64,72 @@ import java.util.concurrent.ConcurrentHashMap;
  * <li>home/user1/router.js?type=script <br>
  * for this case, url protocol = null, url host = home, url path = user1/router.js
  * </ul>
+ *  1、URL相信大家都非常熟悉，一般在HTTP协议中，使用URL请求服务器资源，形如：http://192.168.0.112:8080/user/login.do?name=xxx&id=xxx，
+ *  这个URL可以简化成：protocol://host:port/path?param1=value1&param1=value1&。
+ *  2、dubbo借用了这种URL思想，抽象了URL统一模型，用于在扩展点之间传递数据，组成此URL对象的具体参数如下:
+ *          protocol：一般是dubbo中的各种协议 如：dubbo thrift http zk 等等
+ *          username password：用户名 密码
+ *          host port：主机 端口
+ *          path：接口名称
+ *          parameters：参数 key value键值对
+ *      最终形成的URL对象如下：
+ *          dubbo://192.168.1.7:9090/com.alibaba.service1?param1=value1&param2=value2
+ *   3、所以，对于 dubbo 中的 URL，可以理解为配置总线也可以理解为统一配置模型，说法虽然不同，但都是在表达一个意思，这样的 URL 在 dubbo 中被当做是公共契约，
+ *      所有扩展点参数都包含 URL 参数，URL 作为上下文信息贯穿整个扩展点设计体系。
+ *   4、使用URL优点：
+ *      在没有 URL 之前，只能以字符串传递参数，不停的解析和拼装，导致相同类型的接口，参数时而 Map, 时而 Parameters 类包装：
+ *          export(String url) createExporter(String host, int port, Parameters params)
+ *      使用 URL 一致性模型：
+ *          export(URL url) createExporter(URL url)
+ *      在最新的 dubbo 代码中，我们可以看到大量使用 URL 来进行上下文之间信息的传递，这样的好处是显而易见的：
+ *      1).   使得代码编写者和阅读者能够将一系列的参数联系起来，进而形成规范，使得代码易写，易读。
+ *      2).   可扩展性强，URL 相当于参数的集合(相当于一个 Map)，他所表达的含义比单个参数更丰富，当我们在扩展代码时，
+ *            可以将新的参数追加到 URL 之中，而不需要改变入参，返参的结构。
+ *      3).   统一模型，它位于 org.apache.dubbo.common 包中，各个扩展模块都可以使用它作为参数的表达形式，简化了概念，降低了代码的理解成本。
  *
+ * 如果你能够理解 final 契约和 restful 契约，那我相信你会很好地理解 URL 契约。
+ * 契约的好处我还是啰嗦一句：大家都这么做，就形成了默契，沟通是一件很麻烦的事，统一 URL 模型可以省去很多沟通成本，这边是 URL 统一模型存在的意义。
  * @see java.net.URL
  * @see java.net.URI
  */
 public final class URL implements Serializable {
 
     private static final long serialVersionUID = -1985165475234910535L;
-
+    /**
+     * 协议名称, （例如： dubbo:// zookeeper://）
+     */
     private final String protocol;
-
+    /**
+     * 用户名称(dubbo://roboslyq)
+     */
     private final String username;
-
+    /**
+     * 用户密码
+     */
     private final String password;
 
     // by default, host to registry
+    /**
+     * 主机IP，如果是服务提供者，即服务提供者的IP
+     */
     private final String host;
 
     // by default, port to registry
+    /**
+     * 主机Port，如果是服务提供者，即服务提供者的IP
+     */
     private final int port;
-
+    /**
+     * 上下文路径
+     */
     private final String path;
-
+    /**
+     * 附加参数（使用Map保存）
+     */
     private final Map<String, String> parameters;
 
     // ==== cache ====
+    // 以下是缓存相关,   优化 当前URL的 toString（）
 
     private volatile transient Map<String, Number> numbers;
 
@@ -172,7 +213,7 @@ public final class URL implements Serializable {
     /**
      * Parse url string
      *
-     * @param url URL string
+     * @param url URL string   dubbo://roboslyq:1234@127.0.0.1:20881/context/path?version=1.0.0&application=morgan&noValue
      * @return URL instance
      * @see URL
      */
