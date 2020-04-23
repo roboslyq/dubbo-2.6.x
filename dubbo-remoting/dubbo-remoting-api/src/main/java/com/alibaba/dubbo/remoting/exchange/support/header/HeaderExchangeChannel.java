@@ -139,8 +139,8 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         // 创建 DefaultFuture 对象：客户端并发请求线程阻塞的对象
         DefaultFuture future = new DefaultFuture(channel, req, timeout);
         try {
-            //  非阻塞调用：调用 NettyClient 的 send 方法发送请求
-            //ResponseFuture对象，当前处理客户端请求的线程在经过一系列调用后，会拿到ResponseFuture对象，
+            // 非阻塞调用：调用 NettyClient 的 send 方法发送请求
+            // ResponseFuture对象，当前处理客户端请求的线程在经过一系列调用后，会拿到ResponseFuture对象，
             // 最终该线程会阻塞在这个对象的下面这个方法调用上
             channel.send(req);
         } catch (RemotingException e) {
