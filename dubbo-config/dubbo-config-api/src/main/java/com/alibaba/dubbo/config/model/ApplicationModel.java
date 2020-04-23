@@ -68,6 +68,11 @@ public class ApplicationModel {
         return true;
     }
 
+    /**
+     * 将暴露出去的服务保存到Map中
+     * @param serviceName
+     * @param providerModel
+     */
     public static void initProviderModel(String serviceName, ProviderModel providerModel) {
         //使用Map结构保存所有的服务信息
         if (providedServices.put(serviceName, providerModel) != null) {

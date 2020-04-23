@@ -480,7 +480,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (path == null || path.length() == 0) {
             path = interfaceName;
         }
-        //导出服务：多注册中心，注册服务
+        //======>导出服务：多注册中心，注册服务
         doExportUrls();
         // ProviderModel 表示服务提供者模型，此对象中存储了与服务提供者相关的信息。
         // 比如服务的配置信息，服务实例等。每个被导出的服务对应一个 ProviderModel。
@@ -534,8 +534,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         //循环 `protocols` ，并在每个协议下导出服务：dubbo支持多协议
         //<dubbo:protocol name="dubbo" port="20880" id="dubbo" />
         for (ProtocolConfig protocolConfig : protocols) {
-//            配置检查完毕后，紧接着要做的事情是根据配置，以及其他一些信息组装 URL。
-//            URL 是 Dubbo 配置的载体，通过 URL 可让 Dubbo 的各种配置在各个模块之间传递。
+        //配置检查完毕后，紧接着要做的事情是根据配置，以及其他一些信息组装 URL。
+        //URL 是 Dubbo 配置的载体，通过 URL 可让 Dubbo 的各种配置在各个模块之间传递。
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
         }
     }
@@ -576,7 +576,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 //        5 = {HashMap$Node@2502} "timestamp" -> "1583549187803"
         appendParameters(map, this);
         // 将 MethodConfig 对象数组，添加到 `map` 集合中。
-//        、、于添加 Callback 配置到 map 中
+        // 添加 Callback 配置到 map 中
         if (methods != null && !methods.isEmpty()) {
             for (MethodConfig method : methods) {
                 // 将 MethodConfig 对象，添加到 `map` 集合中。
@@ -639,6 +639,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             } // end of methods for
         }
         // 检测 generic 是否为 "true"，并根据检测结果向 map 中添加不同的信息
+        // generic为泛型服务，主要是为了适应非dubbo框架的接入，使用Map作为通讯的数据结构。
         if (ProtocolUtils.isGeneric(generic)) {
             map.put("generic", generic);
             map.put("methods", Constants.ANY_VALUE);
@@ -647,7 +648,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             if (revision != null && revision.length() > 0) {
                 map.put("revision", revision);
             }
-// 为接口生成包裹类 Wrapper，Wrapper 中包含了接口的详细信息，比如接口方法名数组，字段信息等
+            // 为接口生成包裹类 Wrapper，Wrapper 中包含了接口的详细信息，比如接口方法名数组，字段信息等
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("NO method found in service interface " + interfaceClass.getName());

@@ -138,8 +138,11 @@ public class RegistryProtocol implements Protocol {
      */
 
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
-        //export invoker（本地发布实际上即启动服务，最终调用Netty启动监听端口）
+        /**
+         * ======>export invoker（本地发布实际上即启动服务，最终调用Netty启动监听端口）
+         */
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker);
+
         /**
          * originInvoker中包含invoker属性，其中Invoker结构为：
          * URL=registry://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&backup=39.104.184.69:2181,39.104.184.69:2181&dubbo=2.0.0&export=dubbo%3A%2F%2F192.168.0.101%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip%3D192.168.0.101%26bind.port%3D20880%26dubbo%3D2.0.0%26generic%3Dfalse%26group%3Da%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D13256%26qos.port%3D22222%26revision%3D0.0.2%26side%3Dprovider%26timestamp%3D1530024694398%26version%3D0.0.2&pid=13256&qos.port=22222&registry=zookeeper&timestamp=1530024694379
@@ -187,7 +190,7 @@ public class RegistryProtocol implements Protocol {
         // 创建并返回 DestroyableExporter
         return new DestroyableExporter<T>(exporter, originInvoker, overrideSubscribeUrl, registedProviderUrl);
     }
-//    //启动服务端（当前应用部署所在服务器）监听
+//    启动服务端（当前应用部署所在服务器）监听
 //    invoker = {JavassistProxyFactory$1@2391} "interface com.alibaba.dubbo.demo.DemoService -> registry://47.93.201.88:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&backup=39.104.184.69:2181,39.104.184.69:2181&dubbo=2.0.0&export=dubbo%3A%2F%2F192.168.1.108%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider%26bind.ip%3D192.168.1.108%26bind.port%3D20880%26dubbo%3D2.0.0%26generic%3Dfalse%26group%3Da%26interface%3Dcom.alibaba.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D11808%26qos.port%3D22222%26revision%3D0.0.2%26side%3Dprovider%26timestamp%3D1583557556949%26version%3D0.0.2&pid=11808&qos.port=22222&registry=zookeeper&timestamp=1583557556936"
 //    metadata = {ServiceBean@2011} "<dubbo:service path="com.alibaba.dubbo.demo.DemoService" ref="com.alibaba.dubbo.demo.provider.DemoServiceImpl@1c852c0f" generic="false" uniqueServiceName="a/com.alibaba.dubbo.demo.DemoService:0.0.2" exported="true" unexported="false" interface="com.alibaba.dubbo.demo.DemoService" version="0.0.2" group="a" id="a" />"
     @SuppressWarnings("unchecked")

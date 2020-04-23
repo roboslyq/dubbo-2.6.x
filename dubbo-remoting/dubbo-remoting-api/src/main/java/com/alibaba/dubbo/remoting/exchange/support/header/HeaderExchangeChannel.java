@@ -34,6 +34,8 @@ import java.net.InetSocketAddress;
 
 /**
  * ExchangeReceiver
+ * 客户端发请求
+ * 服务端收请求
  */
 final class HeaderExchangeChannel implements ExchangeChannel {
 
@@ -134,10 +136,12 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         req.setTwoWay(true);
         // 这里的 request 变量类型为 RpcInvocation
         req.setData(request);
-        // 创建 DefaultFuture 对象
+        // 创建 DefaultFuture 对象：客户端并发请求线程阻塞的对象
         DefaultFuture future = new DefaultFuture(channel, req, timeout);
         try {
-            // 调用 NettyClient 的 send 方法发送请求
+            //  非阻塞调用：调用 NettyClient 的 send 方法发送请求
+            //ResponseFuture对象，当前处理客户端请求的线程在经过一系列调用后，会拿到ResponseFuture对象，
+            // 最终该线程会阻塞在这个对象的下面这个方法调用上
             channel.send(req);
         } catch (RemotingException e) {
             future.cancel();

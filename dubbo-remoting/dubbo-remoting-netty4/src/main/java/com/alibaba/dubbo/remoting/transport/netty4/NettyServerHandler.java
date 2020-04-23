@@ -31,16 +31,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * NettyClientHandler
+ * 默认的NettyHandler实现，继承DuplexHandler，因此出入站是同一个类
  */
 @io.netty.channel.ChannelHandler.Sharable
 public class NettyServerHandler extends ChannelDuplexHandler {
-
+    /**
+     * 保存客户端连接信息
+     */
     private final Map<String, Channel> channels = new ConcurrentHashMap<String, Channel>(); // <ip:port, channel>
 
     private final URL url;
-
+    /**
+     * dubbo自定的handler处理器，与Netty无关，通过组合模式实现dubboHandler与netty整合
+     */
     private final ChannelHandler handler;
 
+    /**
+     * 构造函数
+     * @param url
+     * @param handler
+     */
     public NettyServerHandler(URL url, ChannelHandler handler) {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
@@ -56,6 +66,11 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         return channels;
     }
 
+    /**
+     * 激活事件
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelActive();
@@ -71,6 +86,11 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         }
     }
 
+    /**
+     * 取消激活
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
@@ -82,13 +102,24 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         }
     }
 
-
+    /**
+     * 链接断开
+     * @param ctx
+     * @param future
+     * @throws Exception
+     */
     @Override
     public void disconnect(ChannelHandlerContext ctx, ChannelPromise future)
             throws Exception {
 
     }
 
+    /**
+     * 读事件
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
@@ -99,7 +130,13 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         }
     }
 
-
+    /**
+     * 写事件
+     * @param ctx
+     * @param msg
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         super.write(ctx, msg, promise);
@@ -111,6 +148,12 @@ public class NettyServerHandler extends ChannelDuplexHandler {
         }
     }
 
+    /**
+     * 异常事件
+     * @param ctx
+     * @param cause
+     * @throws Exception
+     */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
             throws Exception {

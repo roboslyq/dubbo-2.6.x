@@ -160,7 +160,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
      */
     @SuppressWarnings({"unchecked", "deprecation"})
     public void afterPropertiesSet() throws Exception {
-    	 //刚启动时applicatoin为空
+    	//刚启动时applicatoin为空
         //如果provider为空，说明dubbo:service标签未设置provider属性，如果一个dubbo:provider标签，则取该实例，
         //如果存在多个dubbo:provider配置则provider属性不能为空，否则抛出异常："Duplicate provider configs"。
         if (getProvider() == null) {

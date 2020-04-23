@@ -83,10 +83,10 @@ public class DubboProtocol extends AbstractProtocol {
     //servicekey-stubmethods
     private final ConcurrentMap<String, String> stubServiceMethodsMap = new ConcurrentHashMap<String, String>();
     /**
-     * 匿名内部类：ExchangeHandler
+     * 匿名内部类：ExchangeHandler<这个类十分核心
      */
     private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
-        //
+        //实现接口方法
         public Object reply(ExchangeChannel channel, Object message) throws RemotingException {
             if (message instanceof Invocation) {
                 Invocation inv = (Invocation) message;

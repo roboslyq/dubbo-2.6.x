@@ -99,13 +99,14 @@ getSubscribedOverrideUrl里面，addParameters(Constants.CATEGORY_KEY, Constants
 
 # 17 Dubbo序列化
 
-## 一、通信协议
+**一、通信协议**
 
 Dubbo支持dubbo、rmi、hessian、http、webservice、thrift、redis等多种协议，但是Dubbo官网是推荐我们使用Dubbo协议的，默认也是用的dubbo协议。
 
 先介绍几种常见的协议：
 
-### 1. dubbo协议
+**1. dubbo协议**
+
 缺省协议，使用基于mina1.1.7+hessian3.2.1的tbremoting交互。
 连接个数：单连接
 连接方式：长连接
@@ -130,7 +131,8 @@ buffer=“8192” accepts=“1000” payload=“8388608” />
 
 <dubbo:protocol name="dubbo" accepts="1000" />
 
-###  2. rmi协议
+**2. rmi协议**
+
 Java标准的远程调用协议。
 连接个数：多连接
 连接方式：短连接
@@ -142,9 +144,8 @@ Java标准的远程调用协议。
 
 RMI协议采用JDK标准的java.rmi.*实现，采用阻塞式短连接和JDK标准序列化方式 。
 
+**3. hessian协议**
 
-
-### 3. hessian协议
 基于Hessian的远程调用协议。
 连接个数：多连接
 连接方式：短连接
@@ -157,9 +158,8 @@ RMI协议采用JDK标准的java.rmi.*实现，采用阻塞式短连接和JDK标�
 1、Hessian协议用于集成Hessian的服务，Hessian底层采用Http通讯，采用Servlet暴露服务，Dubbo缺省内嵌Jetty作为服务器实现。
 2、Hessian是Caucho开源的一个RPC框架：http://hessian.caucho.com，其通讯效率高于WebService和Java自带的序列化。
 
+**4. http协议**
 
-
-### 4. http协议
 基于http表单的远程调用协议。参见：[HTTP协议使用说明]
 连接个数：多连接
 连接方式：短连接
@@ -169,8 +169,7 @@ RMI协议采用JDK标准的java.rmi.*实现，采用阻塞式短连接和JDK标�
 适用范围：传入传出参数数据包大小混合，提供者比消费者个数多，可用浏览器查看，可用表单或URL传入参数，暂不支持传文件。
 适用场景：需同时给应用程序和浏览器JS使用的服务。
 
-
-### 5. webservice协议
+**5. webservice协议**
 
 基于WebService的远程调用协议。 
 连接个数：多连接 
@@ -180,9 +179,7 @@ RMI协议采用JDK标准的java.rmi.*实现，采用阻塞式短连接和JDK标�
 序列化：SOAP文本序列化 
 适用场景：系统集成，跨语言调用
 
-
-
-## 二 序列化
+**二 序列化**
 
 序列化是将一个对象变成一个二进制流就是序列化， 反序列化是将二进制流转换成对象。
 
@@ -204,7 +201,7 @@ dubbo序列化主要由Serialization(序列化策略)、DataInput(反序列化�
 
 # 18、本地存根和本地伪装
 
-##　本地存根(Stub)
+**本地存根(Stub)**
 
 典型的 RPC 调用客户端是依赖并且只依赖接口编程来进行远程调用的。在真正发起远程调用之前，用户往往需要做一些预处理的工作，比如提前校验参数。在拿到返回调用结果之后，用户可能需要缓存结果，或者是在调用失败的时候构造容错数据，而不是简单的抛出异常。
 
@@ -318,9 +315,7 @@ public class DemoServiceStub implements DemoService {
 [09/04/19 11:52:21:021 CST] main  INFO stub.StubConsumer: result: greeting dubbo
 ```
 
-
-
-## 本地伪装(Mock)
+**本地伪装(Mock)**
 
 1. Mock 是 Stub 的一个子集，便于服务提供方在客户端执行容错逻辑，因经常需要在出现 RpcException (比如网络失败，超时等)时进行容错，而在出现业务异常(比如登录用户名密码错误)时不需要容错，如果用 Stub，可能就需要捕获并依赖 RpcException 类，而用 Mock 就可以不依赖 RpcException，因为**它的约定就是只有出现 RpcException 时才执行**。 [↩︎](http://dubbo.apache.org/zh-cn/docs/user/demos/local-mock.html#fnref1)
 2. 在 interface 旁放一个 Mock 实现，它实现 BarService 接口，并有一个无参构造函数 [↩︎](http://dubbo.apache.org/zh-cn/docs/user/demos/local-mock.html#fnref2)
@@ -455,7 +450,9 @@ Filter链构造在类`com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper`中�
 服务容器只是一个简单的Main方法，并加载一个简单的Spring容器，用于暴露服务。
 服务容器的加载内容可以扩展，内置了spring, jetty, log4j等加载，可通过Container扩展点进行扩展，参见：`Container`。
 
-- Spring Container
+**容器分类**
+
+- **Spring Container**
 
  这个容器是必须的，不能少的。如果少了就不能解析Dubbo配置文件，因此也不对对外提供服务。
 
@@ -465,7 +462,7 @@ Filter链构造在类`com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper`中�
 
 - Log4j Container
 
-  自动配置log4j的配置，在多进程启动时，自动给日志文件按进程分目录。
+  可选 ，自动配置log4j的配置，在多进程启动时，自动给日志文件按进程分目录。
   配置：(配在java命令-D参数或者dubbo.properties中)
     dubbo.log4j.file=/foo/bar.log ----配置日志文件路径
     dubbo.log4j.level=WARN ----配置日志级别
@@ -473,9 +470,11 @@ Filter链构造在类`com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper`中�
 
 - Logback Container
 
-  与Log4j Container类似
+  可选 ，与Log4j Container类似
 
-## 容器启动
+  
+
+**容器启动**
 
 如：(缺省只加载spring)
 java com.alibaba.dubbo.container.Main
@@ -489,10 +488,6 @@ java com.alibaba.dubbo.container.Main -Ddubbo.container=spring,jetty,log4j
 或：(通过classpath下的dubbo.properties配置传入要加载的容器)
 dubbo.properties
 dubbo.container=spring,jetty,log4j
-
-
-
-
 
 # Dubbo如何实现优雅停机？
 
@@ -550,7 +545,7 @@ Dubbo多进程是指在一台服务器，一个Dubbo服务(应用/项目)启动�
 
 
 ```shell
-`java -Ddubbo.service.server.port=20881`
+java -Ddubbo.service.server.port=20881
 ```
 
 # 23、Dubbo多进程启动，日志怎么处理？是不是混在一起？
@@ -570,10 +565,6 @@ hessian-lite是dubbo内嵌`Hession`框架的一个模块。真正的完整版的
 
 在我们自己的项目中，也可以使用这种思想来集成其它框架的源码来供自己使用。
 
-
-
-
-
 # 25、dubbo-plugin中的dubbo-qos是一个什么模块？
 
 此模块主要是供运维人员使用。借用Netty框架实现了一个Tenet服务器。因此，运维人员可以使用Telnet命令与dubbo进行相关交互。目前支持的命令如下：
@@ -586,13 +577,76 @@ hessian-lite是dubbo内嵌`Hession`框架的一个模块。真正的完整版的
 
 - help 命令
 
-```
+# 26 Dubbo 单一长连接通信会不会有性能 问题？
 
-```
+- Dubbo应用场景：
 
-```
+		**适合于小数据量大并发的服务调用，以及服务消费者机器数远大于服务提供者机器数的情况** 
 
-```
+- 单一长连接定义 
+
+> 1、对于连接池的模型来说，一对服务提供方(进程)和服务消费方(进程)必定是多个连接。 
+>
+> 2、对于单一长连接，一对服务提供方和服务消费方之间只有一个链接。但是一个服务提供方和多个消费者之间是多个channel，是多个连接。 
+
+![long-tcp](./images/99/2.jpg)
+
+> dubbo协议，它就是适合于小数据量大并发，和消费者数远大于服务者数的情况。  dubbo协议采用单一长连接，每条链接有最大限制，如果网卡足够，一个服务者可以提供数倍甚至数十倍的消费者。  其他协议，比如 http、webservice、hessian 等等，都是服务者比消费者多。  消费过多的情况肯定有，你不管选哪种协议都会出现，根据需求选择。 
+
+此处的消息者也是服务器，而不千千万万的用户。
+
+
+
+根据请求的消息类被IO线程处理还是被业务线程池处理，Dubbo提供了下面几种线程模型：
+
+-  all : (AllDispatcher类)所有消息都派发到业务线程池，这些消息包括请求/响应/连接事件/断开事件/心跳等，这些线程模型如下图：
+
+![img](./images/99/3.png)
+
+- direct : (DirectDispacher类)所有消息都不派发到业务线程池，全部在IO线程上直接执行，模型如下图：
+
+![img](./images/99/4.png)
+
+- message : (MessageOnlyDispatcher类)只有请求响应消息派发到业务线程池，其他连接断开事件/心跳等消息，直接在IO线程上执行，模型图如下：
+
+![img](./images/99/5.png)
+
+- execution:(ExecutionDispatcher类)只把请求类消息派发到业务线程池处理，但是响应和其它连接断开事件，心跳等消息直接在IO线程上执行，模型如下图：
+
+![img](./images/99/6.png)
+
+- connection:(ConnectionOrderedDispatcher类)在IO线程上，将连接断开事件放入队列，有序逐个执行，其它消息派发到业务线程池处理，模型如下图：
+
+![img](https://images2018.cnblogs.com/blog/1057539/201805/1057539-20180527102603109-106667064.png)
+
+# 27 单一长链接是怎么区分具体的业务 ？
+
+    –高性能和透明化的RPC远程服务调用方案 –SOA服务治理方案
+    -Apache MINA 框架基于Reactor模型通信框架，基于tcp长连接
+    Dubbo缺省协议采用单一长连接和NIO异步通讯，
+
+适合于小数据量大并发的服务调用，以及服务消费者机器数远大于服务提供者机器数的情况
+分析源代码，基本原理如下：
+
+        client一个线程调用远程接口，生成一个唯一的ID（比如一段随机字符串，UUID等），Dubbo是使用AtomicLong从0开始累计数字的
+        将打包的方法调用信息（如调用的接口名称，方法名称，参数值列表等），和处理结果的回调对象callback，全部封装在一起，组成一个对象object
+        向专门存放调用信息的全局ConcurrentHashMap里面put(ID, object)
+        将ID和打包的方法调用信息封装成一对象connRequest，使用IoSession.write(connRequest)异步发送出去
+        当前线程再使用callback的get()方法试图获取远程返回的结果，在get()内部，则使用synchronized获取回调对象callback的锁，再先检测是否已经获取到结果，如果没有，然后调用callback的wait()方法，释放callback上的锁，让当前线程处于等待状态。
+        服务端接收到请求并处理后，将结果（此结果中包含了前面的ID，即回传）发送给客户端，客户端socket连接上专门监听消息的线程收到消息，分析结果，取到ID，再从前面的ConcurrentHashMap里面get(ID)，从而找到callback，将方法调用结果设置到callback对象里。
+        监听线程接着使用synchronized获取回调对象callback的锁（因为前面调用过wait()，那个线程已释放callback的锁了），再notifyAll()，唤醒前面处于等待状态的线程继续执行（callback的get()方法继续执行就能拿到调用结果了），至此，整个过程结束。
+
+当前线程怎么让它“暂停”，等结果回来后，再向后执行？
+
+    先生成一个对象obj，在一个全局map里put(ID,obj)存放起来，再用synchronized获取obj锁，再调用obj.wait()让当前线程处于等待状态，然后另一消息监听线程等到服
+    务端结果来了后，再map.get(ID)找到obj，再用synchronized获取obj锁，再调用obj.notifyAll()唤醒前面处于等待状态的线程。
+
+正如前面所说，Socket通信是一个全双工的方式，如果有多个线程同时进行远程方法调用，这时建立在client server之间的socket连接上会有很多双方发送的消息传递，前后顺序也可能是乱七八糟的，server处理完结果后，将结果消息发送给client，client收到很多消息，怎么知道哪个消息结果是原先哪个线程调用的？
+
+    使用一个ID，让其唯一，然后传递给服务端，再服务端又回传回来，这样就知道结果是原先哪个线程的了。
+原文链接：https://blog.csdn.net/zgliang88/java/article/details/75440043
+
+https://www.cnblogs.com/xiohao/p/8984003.html
 
 # 参考资料
 
@@ -607,3 +661,5 @@ hessian-lite是dubbo内嵌`Hession`框架的一个模块。真正的完整版的
 [Dubbo 容器(Container)]( https://blog.csdn.net/u012425586/article/details/84827130?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task )
 
 [运维命令-QOS]( http://dubbo.apache.org/zh-cn/docs/user/references/qos.html )
+
+[单一长连接](https://blog.csdn.net/zgliang88/article/details/75440043/)
