@@ -562,6 +562,38 @@ Dubbo有一个模块是Container的子模块：
 
 在些模块中实现了多进程时对应多个日志文件。即不同的Dubbo进程有不同的日志文件，互不干扰。
 
+
+
+# 24、hessian-lite是一个什么模块？
+
+hessian-lite是dubbo内嵌`Hession`框架的一个模块。真正的完整版的Hession框架源码比较多，dubbo删除仅内嵌入一部分，并且作了部分优化修改。
+
+在我们自己的项目中，也可以使用这种思想来集成其它框架的源码来供自己使用。
+
+
+
+
+
+# 25、dubbo-plugin中的dubbo-qos是一个什么模块？
+
+此模块主要是供运维人员使用。借用Netty框架实现了一个Tenet服务器。因此，运维人员可以使用Telnet命令与dubbo进行相关交互。目前支持的命令如下：
+
+- ls 列出消费者和提供者
+
+- Online 上线服务命令
+
+- Offline 下线服务命令
+
+- help 命令
+
+```
+
+```
+
+```
+
+```
+
 # 参考资料
 
 [Regitstry,route,cluster,loadbalance,directory关系汇总](https://www.cnblogs.com/notlate/p/10088829.html)
@@ -573,3 +605,5 @@ Dubbo有一个模块是Container的子模块：
 [本地存根STUB与MOCK]( http://dubbo.apache.org/zh-cn/blog/dubbo-stub-mock.html )
 
 [Dubbo 容器(Container)]( https://blog.csdn.net/u012425586/article/details/84827130?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task )
+
+[运维命令-QOS]( http://dubbo.apache.org/zh-cn/docs/user/references/qos.html )

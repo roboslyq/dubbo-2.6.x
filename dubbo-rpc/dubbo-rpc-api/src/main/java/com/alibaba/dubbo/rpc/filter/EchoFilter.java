@@ -27,11 +27,16 @@ import com.alibaba.dubbo.rpc.RpcResult;
 
 /**
  * EchoInvokerFilter
+ * 1、服务端的拦截器
+ * 2、回声测试拦截器，如果消费者调用的是回声测试方法，则在此拦截器直接返回。不需要走后面具体的服务。可以做探测使用
+ * 3、在提供者端，在解析报文，实际调用invoker之前，通过Filter拦截链中的EchoFilter判断方法是否为echo，如果是echo，
+ *    不进行invoker调用，走EchoFilter内部的调用逻辑。
  */
 @Activate(group = Constants.PROVIDER, order = -110000)
 public class EchoFilter implements Filter {
 
     public Result invoke(Invoker<?> invoker, Invocation inv) throws RpcException {
+        //如果方法名称为$echo并且参数不为空，并且只有一个参数，这三个条件均满足，我们认为是回声测试方法。
         if (inv.getMethodName().equals(Constants.$ECHO) && inv.getArguments() != null && inv.getArguments().length == 1)
             return new RpcResult(inv.getArguments()[0]);
         return invoker.invoke(inv);

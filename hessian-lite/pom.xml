@@ -27,5 +27,7 @@ limitations under the License.
     <artifactId>hessian-lite</artifactId>
     <packaging>jar</packaging>
     <version>3.2.1-fixed-2</version>
+    <!-- Hessian 的embed版本 （即dubbo直接引入Hession的源码包，删除部分不需要使用的代码）-->
     <name>Hessian Lite(Alibaba embed version)</name>
+
 </project>

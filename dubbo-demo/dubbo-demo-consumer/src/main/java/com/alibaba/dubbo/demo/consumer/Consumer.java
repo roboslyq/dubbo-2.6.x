@@ -16,6 +16,7 @@
  */
 package com.alibaba.dubbo.demo.consumer;
 
+import com.alibaba.dubbo.rpc.service.EchoService;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.alibaba.dubbo.common.extension.ExtensionLoader;
@@ -35,7 +36,8 @@ public class Consumer {
 //		Protocol p = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 //		Protocol p1 = ExtensionLoader.getExtensionLoader(Protocol.class).getDefaultExtension();
 //		Protocol p2 = ExtensionLoader.getExtensionLoader(Protocol.class).getExtension("xxxxxx");
-		
+        EchoService demoService3 = (EchoService)demoService2;
+        demoService3.$echo("hello echo");
 
         while (true) {
             try {

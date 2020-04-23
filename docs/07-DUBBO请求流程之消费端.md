@@ -402,6 +402,28 @@ private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String
 
 ### (2) DubboInvoker
 
+## 6.调用过程总结
+
+```xml
+proxy0#sayHello(String)
+  —> InvokerInvocationHandler#invoke(Object, Method, Object[])
+    —> MockClusterInvoker#invoke(Invocation)
+      —> AbstractClusterInvoker#invoke(Invocation)
+        —> FailoverClusterInvoker#doInvoke(Invocation, List<Invoker<T>>, LoadBalance)
+          —> Filter#invoke(Invoker, Invocation)  // 包含多个 Filter 调用
+            —> ListenerInvokerWrapper#invoke(Invocation) 
+              —> AbstractInvoker#invoke(Invocation) 
+                —> DubboInvoker#doInvoke(Invocation)
+                  —> ReferenceCountExchangeClient#request(Object, int)
+                    —> HeaderExchangeClient#request(Object, int)
+                      —> HeaderExchangeChannel#request(Object, int)
+                        —> AbstractPeer#send(Object)
+                          —> AbstractClient#send(Object, boolean)
+                            —> NettyChannel#send(Object, boolean)
+                              —> NioClientSocketChannel#write(Object)
+```
+
+其中，在NettyChannel#send之前，还要完成编码操作。编码操作的入口为**` ExchangeCodec `** 。
 
 
-> 
+
