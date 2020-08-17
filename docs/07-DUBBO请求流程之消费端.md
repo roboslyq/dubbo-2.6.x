@@ -1,6 +1,6 @@
 # 7. DUBBO之消费端调用流程
 
-Dubbo消费端调用栈“
+## Dubbo消费端调用栈
 
 > ```verilog
 > //七===================交易发送(此时回到10.1步骤)====================
@@ -76,12 +76,12 @@ public class Consumer {
 
 ## 2、`DemoService`源码分析
 
-我们可以通过阿里提供的*Arthas*工具获得动态代理生成的源码，大概如下：
+我们可以通过阿里提供的***Arthas***工具获得动态代理生成的源码，大概如下：
 
 ```java
-/
-  消费者端的代理类源码(示例)
-  当消费者调用demoService.sayHello("")时，实现调用下面的源码。
+/**
+ * 消费者端的代理类源码(示例)
+ * 当消费者调用demoService.sayHello("")时，实现调用下面的源码。
  /
 public class Proxy0 implements ClassGenerator.DC, EchoService, DemoService {
     // 方法数组:此数据有排序，然后根据排序选择具体的方法。
@@ -122,14 +122,14 @@ public class Proxy0 implements ClassGenerator.DC, EchoService, DemoService {
 
 我们可以看到，当调用`demoService.sayHello`时，其它调用的是`Proxy0.sayHello`。在Proxy0.sayHello中，我们通过`InvocationHandler.invoke(this, methods[0], arrobject)`来实现具体调用。所以，真正的远程调用入口就是`InovcationHandler`。
 
-## 3、`InvocationHandler`
+## 3、InvocationHandler
 
 在`DUBBO`消费端启动过程中，我们可以知道，具体代理生成代理如下(以`JavassitProxy`为例)：
 
 ```java
-  /
-     消费端启动时，获取代理proxy对象<其中InvokerInvocationHandler为生成代理类的类属性
-     ，同时完成InvokerInvocationHandler中的invoker初始化。
+  /**
+   *  消费端启动时，获取代理proxy对象<其中InvokerInvocationHandler为生成代理类的类属性
+   * ，同时完成InvokerInvocationHandler中的invoker初始化。
     /
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
@@ -142,32 +142,30 @@ public class Proxy0 implements ClassGenerator.DC, EchoService, DemoService {
 *InvokerInvocatoinHandler*源码如下：
 
 ```java
-/
-  1、消费者发起接口调用<Proxy0代理类中>,触发此方法调用InvokerHandler：Invoker代理类，此处的Invoke()方法会调用真正的Invoker实现
-  2、具体初始化详情见{@link ProxyFactory#getProxy },具体实现为{@link JavassistProxyFactory} 和{@link JdkProxyFactory}
-     其中，默认实现是{@link JavassistProxyFactory}
- /
+/**
+  *1、消费者发起接口调用<Proxy0代理类中>,触发此方法调用InvokerHandler：Invoker代理类，此处的Invoke()方法会调用真正的	Invoker实现
+  * 2、具体初始化详情见{@link ProxyFactory#getProxy },具体实现为{@link JavassistProxyFactory} 和{@link JdkProxyFactory}
+  * 其中，默认实现是{@link JavassistProxyFactory}
+ */
 public class InvokerInvocationHandler implements InvocationHandler {
 
     //此变量类型为MockClusterInvoker 内部封装了服务降级逻辑。
     private final Invoker<?> invoker;
 
-    /
-     
-      @param handler
-     /
+    /**
+     * @param handler
+     */
     public InvokerInvocationHandler(Invoker<?> handler) {
         this.invoker = handler;
     }
 
-    /
-     
-      @param proxy 被代理对象
-      @param method 调用方法
-      @param args  调用参数
-      @return
-      @throws Throwable
-     /
+    /**
+      *@param proxy 被代理对象
+      *@param method 调用方法
+      *@param args  调用参数
+      *@return
+      *@throws Throwable
+     */
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
         Class<?>[] parameterTypes = method.getParameterTypes();
@@ -185,10 +183,10 @@ public class InvokerInvocationHandler implements InvocationHandler {
         if ("equals".equals(methodName) && parameterTypes.length == 1) {
             return invoker.equals(args[0]);
         }
-        /
-          1、此inovker实例为：MockClusterInvoker
-          2、将 method 和 args 封装到 RpcInvocation 中，并执行后续的调用创建上下文Invocation
-         /
+        /**
+          *1、此inovker实例为：MockClusterInvoker
+          *2、将 method 和 args 封装到 RpcInvocation 中，并执行后续的调用创建上下文Invocation
+         */
         return invoker.invoke(new RpcInvocation(method, args)
             ).recreate();
     }
@@ -202,7 +200,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
 那么上面的invoker又是哪个实例呢？从导出的过程中可知，具体实例是`MockClusterInvoker`。
 
-## 4、`ClusterInvoker`
+## 4、ClusterInvoker
 
 ### (1)`MockClusterInvoker`
 
@@ -221,11 +219,11 @@ public Result invoke(Invocation invocation) throws RpcException {
             if (logger.isWarnEnabled()) {
                 logger.info("force-mock: " + invocation.getMethodName() + " force-mock enabled , url : " + directory.getUrl());
             }
-            //force:direct mock
+            // force:direct mock
             // force:xxx 直接执行 mock 逻辑，不发起远程调用
             result = doMockInvoke(invocation, null);
         } else {
-            //fail-mock
+            // fail-mock
             // fail:xxx 表示消费方对调用服务失败后，再执行 mock 逻辑，不抛出异常
             try {
                 // 调用其他 Invoker 对象的 invoke 方法（Invoker:默认为 FailoverClusterInvoker）
@@ -254,15 +252,14 @@ public Result invoke(Invocation invocation) throws RpcException {
 
 ```java
 public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
-    /
-     
-      消费者远程方法调用生产
-      @param invocation 调用上下文
-      @param invokers 可用的invoker。默认实现的协议为dubbo，所以默认此处是DubboInvoker
-      @param loadbalance 负载均衡器
-      @return
-      @throws RpcException
-     /
+    /**
+      *消费者远程方法调用生产
+      *@param invocation 调用上下文
+      *@param invokers 可用的invoker。默认实现的协议为dubbo，所以默认此处是DubboInvoker
+      *@param loadbalance 负载均衡器
+      *@return
+      *@throws RpcException
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Result doInvoke(Invocation invocation,
                             final List<Invoker<T>> invokers,
@@ -339,7 +336,7 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
 
 
-## 5. Invoker
+## 5、Filter过滤器链
 
 此处以`DubboInvoker`进行分析
 
@@ -347,11 +344,9 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
 并且此处也使用代理包装模式进行了层层包装调用，具体包装过程如下：
 
-RegistryDirectory$InvokerDelegate -> ProtocolFilterWrapper-->ConsumerContextFilter --> FutureFilter-->MonitorFilter-->ListenerInvokerWrapper。
+`RegistryDirectory$InvokerDelegate -> ProtocolFilterWrapper-->ConsumerContextFilter --> FutureFilter-->MonitorFilter-->ListenerInvokerWrapper`。
 
 最终，在`ListenerInvokerWrapper`中实现`DubboInvoker`的调用。
-
-### (1)Filter过滤器链
 
 **`ProtocolFilterWrapper`**中进行链条的构造，源码如下：
 
@@ -400,9 +395,84 @@ private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String
     }
 ```
 
-### (2) DubboInvoker
+## 6、DubboInvoker
 
-## 6.调用过程总结
+`DubboInvoker`核心方法`doInvoke`代码如下：
+
+```java
+/**
+     * Dubbo invoker调用
+     * 1、Dubbo 实现同步和异步调用比较关键的一点就在于由谁调用 ResponseFuture 的 get 方法。
+     *    同步调用模式下，由框架自身调用 ResponseFuture 的 get 方法。异步调用模式下，则由用户调用该方法。
+     * @param invocation
+     * @return
+     * @throws Throwable
+     */
+    @Override
+    protected Result doInvoke(final Invocation invocation) throws Throwable {
+        RpcInvocation inv = (RpcInvocation) invocation;
+        // methodName = "sayHello"
+        final String methodName = RpcUtils.getMethodName(invocation);
+        // 设置 path 和 version 到 attachment 中
+        // getUrl().getPath() = com.alibaba.dubbo.demo.DemoService
+        inv.setAttachment(Constants.PATH_KEY, getUrl().getPath());
+        inv.setAttachment(Constants.VERSION_KEY, version);
+        //调用客户端，有多层client包装，具体顺序为【ReferenceCountExchangeClient -> HeaderExchangeClient -> HeaderExchangeChannel】
+        ExchangeClient currentClient;
+        if (clients.length == 1) {
+            // 长度为1，直接从 clients 数组中获取 ExchangeClient
+            currentClient = clients[0];
+        } else {
+            currentClient = clients[index.getAndIncrement() % clients.length];
+        }
+        try {
+            // 获取异步配置
+            boolean isAsync = RpcUtils.isAsync(getUrl(), invocation);
+            // isOneway 为 true，表示“单向”通信
+            boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
+            //获取超时时间
+            int timeout = getUrl().getMethodParameter(methodName, Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
+            if (isOneway) {            // 异步无返回值
+                boolean isSent = getUrl().getMethodParameter(methodName, Constants.SENT_KEY, false);
+                // 发送请求
+                currentClient.send(inv, isSent);
+                // 设置上下文中的 future 字段为 null
+                RpcContext.getContext().setFuture(null);
+                // 返回一个空的 RpcResult
+                return new RpcResult();
+            } else if (isAsync) {            // 异步有返回值
+                // 发送请求，并得到一个 ResponseFuture 实例《具体实现为DefaultFuture》
+                ResponseFuture future = currentClient.request(inv, timeout);
+                // 设置 future 到上下文中
+                RpcContext.getContext().setFuture(new FutureAdapter<Object>(future));
+                // 暂时返回一个空结果
+                return new RpcResult();
+            } else {                // 同步调用<当前版本默认的调用方式>
+                RpcContext.getContext().setFuture(null);
+                // currentClient = ReferenceCountExchangeClient： 发送请求，得到一个 ResponseFuture 实例，并调用该实例的 get 方法进行等待
+                return (Result) currentClient.request(inv, timeout).get();
+            }
+        } catch (TimeoutException e) {
+            throw new RpcException(RpcException.TIMEOUT_EXCEPTION, "Invoke remote method timeout. method: " + invocation.getMethodName() + ", provider: " + getUrl() + ", cause: " + e.getMessage(), e);
+        } catch (RemotingException e) {
+            throw new RpcException(RpcException.NETWORK_EXCEPTION, "Failed to invoke remote method: " + invocation.getMethodName() + ", provider: " + getUrl() + ", cause: " + e.getMessage(), e);
+        }
+    }
+```
+
+
+
+## 7、ExchangeClient
+
+
+
+## 8、NettyChannel
+
+> NettyClient实现了AbstractPeer接口，因此，在HeaderExchangeClient中，实际调用的是NettyClient实现。
+
+最终调用netty包中的`NioClientSocketChannel#write(Object)`方法，实现数据发送。
+
+## 9.调用过程总结
 
 ```xml
 proxy0#sayHello(String)

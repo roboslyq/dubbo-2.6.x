@@ -69,7 +69,10 @@ public class NettyServer extends AbstractServer implements Server {
      * @throws RemotingException
      */
     public NettyServer(URL url, ChannelHandler handler) throws RemotingException {
-//        ChannelHandlers.wrap()会将Handler包装成一个链
+ //    ChannelHandlers.wrap()会将Handler（此时默认Handler应该是 new DecodeHandler(new HeaderExchangeHandler(handler)）包装成一个链
+ //    包装之后等价效果： MultiMessageHandler(new HeartbeatHandler(new AllChannelHandler(DecodeHandler(new HeaderExchangeHandler(handler)))))
+ //    其中AllChannelHandler是通过 ExtensionLoader.getExtensionLoader(Dispatcher.class).getAdaptiveExtension().dispatch(handler, url)来实现加载的
+ //    AllDispatcher实现了异步转同步的策略(一共有5种实现，AllDispatcher是默认实现，AllDispathcer对应是的是AllChannelHandler)
         super(url, ChannelHandlers.wrap(handler, ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME)));
     }
 
@@ -78,14 +81,17 @@ public class NettyServer extends AbstractServer implements Server {
         NettyHelper.setNettyLoggerFactory();
 
         bootstrap = new ServerBootstrap();
-
+        //bossGroup线程数为1，因为多个没必要，只监听一个端口，netty只会使用这一个线程。
         bossGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("NettyServerBoss", true));
         workerGroup = new NioEventLoopGroup(getUrl().getPositiveParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS),
                 new DefaultThreadFactory("NettyServerWorker", true));
-
+        /*
+         * 通过组合方式实现Dubbo抽象Handler与Netty的Handler集成。因为Server本身就是一个Dubbo中的Handler。所以此处传入this参数。
+         */
         final NettyServerHandler nettyServerHandler = new NettyServerHandler(getUrl(), this);
+        // 保存了到实例变量channels中
         channels = nettyServerHandler.getChannels();
-
+        //标准的netty服务端启动
         bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childOption(ChannelOption.TCP_NODELAY, Boolean.TRUE)
@@ -96,18 +102,22 @@ public class NettyServer extends AbstractServer implements Server {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyServer.this);
                         ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
-                                .addLast("decoder", adapter.getDecoder())
-                                .addLast("encoder", adapter.getEncoder())
-                                .addLast("handler", nettyServerHandler);
+                                .addLast("decoder", adapter.getDecoder()) //自定义解码器
+                                .addLast("encoder", adapter.getEncoder()) //自定义编码器
+                                .addLast("handler", nettyServerHandler);//自定业务处理Handler(链式结构，可以是异步的线程池)
                     }
                 });
-        // bind
         ChannelFuture channelFuture = bootstrap.bind(getBindAddress());
         channelFuture.syncUninterruptibly();
+        // 保存了到实例变量channels中
         channel = channelFuture.channel();
 
     }
 
+    /**
+     * 优雅的关机
+     * @throws Throwable
+     */
     @Override
     protected void doClose() throws Throwable {
         try {
@@ -133,6 +143,7 @@ public class NettyServer extends AbstractServer implements Server {
             logger.warn(e.getMessage(), e);
         }
         try {
+//            优雅的关机
             if (bootstrap != null) {
                 bossGroup.shutdownGracefully();
                 workerGroup.shutdownGracefully();

@@ -45,7 +45,9 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
     /**
      *
-     * @param proxy 被代理对象
+     * @param proxy 被代理对象: 此对象是用javaassit、asm等字节码生成的代理类，比如 Proxy0等
+     *              仅作为一个入参，完全没有使用。因为dubbo远程调用仅需要类名，方法名及参数等信息。
+     *              完全不需要代理类。
      * @param method 调用方法
      * @param args  调用参数
      * @return

@@ -28,9 +28,9 @@ import com.alibaba.dubbo.remoting.transport.ChannelHandlerAdapter;
 
 /**
  * Exchanger facade. (API, Static, ThreadSafe)
- * Exchanger的门面类，将Exchanger进行包装，包括启动服务(bint()),客户端连接(connect())
- * 1、服务端bind（）时，返回ExchangeServer
- * 2、客户羰connect()时，返回ExchangeClient
+ * Exchanger的门面类，将Exchanger进行包装，包括启动服务(bind()),客户端连接(connect())
+ * 1、服务端bind()时，返回{@link ExchangeServer}
+ * 2、客户端connect()时，返回{@link ExchangeClient}
  */
 public class Exchangers {
 

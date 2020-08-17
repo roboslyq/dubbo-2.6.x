@@ -45,7 +45,7 @@ public class Transporters {
     /**
      * 服务端启动服务入口
      * @param url
-     * @param handlers
+     * @param handlers new DecodeHandler( new HeaderExchangeHandler(handler))
      * @return
      * @throws RemotingException
      */
@@ -64,9 +64,9 @@ public class Transporters {
             // 如果 handlers 元素数量大于1，则创建 ChannelHandler 分发器
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        // 获取自适应 Transporter 实例:Transporter$Adaptive，并调用实例方法
+        // 获取自适应 Transporter 实例:Transporter$Adaptive，并调用实例方法。默认是netty
         return getTransporter()
-                .bind(url, handler);
+                .bind(url, handler);//启动服务
     }
 
     /**

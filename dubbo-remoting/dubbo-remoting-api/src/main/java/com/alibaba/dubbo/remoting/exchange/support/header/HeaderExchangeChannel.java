@@ -44,7 +44,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
     private static final String CHANNEL_KEY = HeaderExchangeChannel.class.getName() + ".CHANNEL";
 
     /**
-     * 此处Channel默认为AbstractPeer
+     * 此处Channel默认为AbstractPeer的具体实现:NettyClient
      */
     private final Channel channel;
 
