@@ -7,11 +7,11 @@
    - IDEA
    - GIT
    - MAVEN
-   > 目前DUBBO使用的是Maven来构建项目，因此我们需要`Maven`。
+   > 目前DUBBO使用的是Maven来构建项目，因此我们需要安装`Maven`。
 
 ## 源代码下载
 
-使用Git从`https://github.com/alibaba/dubbo`直接下载，但强烈建议将此项目`fork`到自己的仓库中，方便自己添加注释，笔记记录。
+使用Git从`https://github.com/alibaba/dubbo`直接下载，但强烈建议将此项目`fork`到自己的仓库中，方便自己添加注释，做笔记记录。
 
 下载之后，Maven会自动下载依赖，可能需要比较久的时间，不要着急慢慢等。当所有依赖下载完成之后 ，目录结构如下：
 
@@ -25,19 +25,17 @@
 | dependencies-bom | dubbo对外部依赖控制                                          |
 | dubbo-cluster    | dubbo集群控制,主要包括`LoadBalance `和`Router`相关           |
 | dubbo-common     | 通用公共的工具类封装,比如线程池,序列化,并发,编译,字节等      |
-| dubbo-config     | 配置相关,主要是与Spring集成配置.通过SPI机制实现。主要有围绕生活者和消费者这两端进行配置，即ServiceConfig和ReferenceConfig. |
+| dubbo-config     | 配置相关,主要是与Spring集成配置.通过SPI机制实现。主要有围绕生活者和消费者这两端进行配置，即`ServiceConfig`和`ReferenceConfig` |
 | dubbo-container  | 容器实现                                                     |
 | dubbo-demo       | demo实现,官方提供的一个provider和consumer                    |
 | dubbo-filter     | 拦截器功能实现                                               |
 | dubbo-monitor    | 监控中心实现                                                 |
 | dubbo-plugin     | 插件机制实现                                                 |
 | dubbo-registry   | 注册模块实现                                                 |
-| dubbo-remoting   | 远程调用实现<主要包括Exchange,transport,Serialize等实现，通讯的底层实现>。Exchange: 信息交换层，建立统一的dubbo中Request和Response模型。<br>Transport: 网络传输层，把网络传输封装为统一接口。比如封装Mina,netty为Dubbo的统一接口。<br>Serialize: 序列化 |
+| dubbo-remoting   | 远程调用实现<主要包括Exchange,transport,Serialize等实现，通讯的底层实现>。<br>Exchange: 信息交换层，建立统一的dubbo中Request和Response模型。<br>Transport: 网络传输层，把网络传输封装为统一接口。比如封装Mina,netty为Dubbo的统一接口。<br>Serialize: 序列化 |
 | dubbo-rpc        | 主要是对各种远程调用封装。主要是通过Protocol抽象实现。       |
-| dubbo-test       |                                                              |
-| hessian-lite     |                                                              |
-
-
+| dubbo-test       | 一些测试示例相关，比如性能测试，集成测试等示例               |
+| hessian-lite     | 内嵌hession版本。hession是一种具体序列化协议实现             |
 
 ## 调试
 
