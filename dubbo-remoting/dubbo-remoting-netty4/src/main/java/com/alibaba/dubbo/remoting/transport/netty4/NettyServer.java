@@ -63,16 +63,17 @@ public class NettyServer extends AbstractServer implements Server {
     private EventLoopGroup workerGroup;
 
     /**
-     * 创建Netty服务器
+     * 创建Netty服务器，在NettyTransporter.bind(URL,ChannelHandler)中被调用
      * @param url
      * @param handler
      * @throws RemotingException
      */
     public NettyServer(URL url, ChannelHandler handler) throws RemotingException {
- //    ChannelHandlers.wrap()会将Handler（此时默认Handler应该是 new DecodeHandler(new HeaderExchangeHandler(handler)）包装成一个链
- //    包装之后等价效果： MultiMessageHandler(new HeartbeatHandler(new AllChannelHandler(DecodeHandler(new HeaderExchangeHandler(handler)))))
- //    其中AllChannelHandler是通过 ExtensionLoader.getExtensionLoader(Dispatcher.class).getAdaptiveExtension().dispatch(handler, url)来实现加载的
- //    AllDispatcher实现了异步转同步的策略(一共有5种实现，AllDispatcher是默认实现，AllDispathcer对应是的是AllChannelHandler)
+ //    1、此处ChannelHandler接口与Netty没有任何关系，是DUBBO自己抽象的一层接口。
+ //    2、ChannelHandlers.wrap()会将Handler（此时默认Handler应该是 new DecodeHandler(new HeaderExchangeHandler(handler))包装成一个链
+ //      包装之后等价效果： MultiMessageHandler(new HeartbeatHandler(new AllChannelHandler(DecodeHandler(new HeaderExchangeHandler(handler)))))
+ //      其中AllChannelHandler是通过 ExtensionLoader.getExtensionLoader(Dispatcher.class).getAdaptiveExtension().dispatch(handler, url)来实现加载的
+ //    3、AllDispatcher实现了异步转同步的策略(一共有5种实现，AllDispatcher是默认实现，AllDispathcer对应是的是AllChannelHandler)
         super(url, ChannelHandlers.wrap(handler, ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME)));
     }
 
@@ -86,7 +87,10 @@ public class NettyServer extends AbstractServer implements Server {
         workerGroup = new NioEventLoopGroup(getUrl().getPositiveParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS),
                 new DefaultThreadFactory("NettyServerWorker", true));
         /*
-         * 通过组合方式实现Dubbo抽象Handler与Netty的Handler集成。因为Server本身就是一个Dubbo中的Handler。所以此处传入this参数。
+         * 1、通过组合方式实现Dubbo抽象ChannelHandler与Netty的Handler集成。
+         * 2、因为Server本身就是一个Dubbo中的Handler。所以此处传入this参数。
+         * 3、this通过构造函数，持有dubbo抽象的handler链，完成所有的相关业务处理。
+         *
          */
         final NettyServerHandler nettyServerHandler = new NettyServerHandler(getUrl(), this);
         // 保存了到实例变量channels中

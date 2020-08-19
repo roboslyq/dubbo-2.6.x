@@ -1,5 +1,21 @@
 # 7.DUBBO之消费端调用流程
 
+## 服务端NettyHandler初始化流程
+
+```
+Exchangers : new ChannelHandlerAdapter()
+
+Exchangers : new ExchangeHandlerDispatcher(replier, new ChannelHandlerAdapter())
+
+HeaderExchanger :  new DecodeHandler( new HeaderExchangeHandler(new ExchangeHandlerDispatcher(replier, new ChannelHandlerAdapter()))
+
+NettyServer:  ChannelHandlers.wrap(new DecodeHandler( new HeaderExchangeHandler(new ExchangeHandlerDispatcher(replier, new ChannelHandlerAdapter())), ExecutorUtil.setThreadName(url, SERVER_THREAD_POOL_NAME)))
+
+NettyServer: new NettyServerHandler(getUrl(), NettyServer.this);
+```
+
+
+
 ## 调用栈
 
 - 第一段： 服务器接收到请求到解码，得到Request阶段。(断点在`DubboCodec.decodeBody`中)

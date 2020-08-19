@@ -64,7 +64,8 @@ import java.util.Map;
 public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanNameAware {
 
     private static final long serialVersionUID = 213195494150089726L;
-
+    // 测试初始化次数
+    private static int count = 0;
     private static transient ApplicationContext SPRING_CONTEXT;
 
     private final transient Service service;
@@ -75,8 +76,15 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 
     private transient boolean supportedApplicationListener;
 
+    /**
+     * 对应配置：
+     *     <dubbo:service delay="0" protocol="p1" id="a" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService" version="0.0.2" group="a"/>
+     *     <dubbo:service delay="0"  protocol="p1" id="b" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService1" version="0.0.1" group="b"/>
+     * 每一个配置 <dubbo:service>对应一个ServiceBean,所以如果仅是上面的两个配置，ServiceBean会被实例化两次
+     */
     public ServiceBean() {
         super();
+        System.out.println("ServiceBean初始化次数： "+ ++count+", 当前初始化Service: ");
         this.service = null;
     }
 

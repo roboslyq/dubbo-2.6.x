@@ -27,7 +27,7 @@ limitations under the License.
     <!-- use multicast registry center to export service -->
 <!--     <dubbo:registry address="multicast://224.5.6.7:1234"/> -->
 <!--     <dubbo:registry address="zookeeper://47.93.201.88:2181,39.104.184.69:2181,39.104.184.69:2181"/> -->
-<dubbo:registry address="zookeeper://47.93.201.88:2181?backup=39.104.184.69:2181,39.104.184.69:2181" />
+<dubbo:registry address="zookeeper://47.93.201.88:2181" />
 
     <!-- use dubbo protocol to export service on port 20880 -->
     <dubbo:protocol id="p1" name="dubbo" port="20880"/>
@@ -40,7 +40,7 @@ limitations under the License.
     <bean id="demoService1" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl1"/>
 
     <!-- declare the service interface to be exported -->
-    <dubbo:service protocol="p1" id="a" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService" version="0.0.2" group="a"/>
-    <dubbo:service protocol="p1" id="b" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService1" version="0.0.1" group="b"/>
+    <dubbo:service delay="0" protocol="p1" id="a" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService" version="0.0.2" group="a"/>
+    <dubbo:service delay="0"  protocol="p1" id="b" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService1" version="0.0.1" group="b"/>
 
 </beans>

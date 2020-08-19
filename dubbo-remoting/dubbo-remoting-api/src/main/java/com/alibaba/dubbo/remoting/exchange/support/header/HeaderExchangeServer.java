@@ -192,6 +192,12 @@ public class HeaderExchangeServer implements ExchangeServer {
         return server.getChannelHandler();
     }
 
+    /**
+     * 添加新的URL，因为一个应用对应多个服务service,因为第一个service启动之后就已经创建了Netty等相应的Server,
+     * 监听了对应的ip:port。所以，对后续的service来说，不需要重新创建新的Server，只需要reset相关的URL
+     * 配置即可。
+     * @param url
+     */
     public void reset(URL url) {
         server.reset(url);
         try {

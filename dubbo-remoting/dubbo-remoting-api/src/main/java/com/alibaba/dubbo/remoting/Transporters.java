@@ -43,7 +43,7 @@ public class Transporters {
     }
 
     /**
-     * 服务端启动服务入口
+     * 服务端启动服务入口，在HeaderExchager.bind(URL,ExchangerHandler)中被调用
      * @param url
      * @param handlers new DecodeHandler( new HeaderExchangeHandler(handler))
      * @return

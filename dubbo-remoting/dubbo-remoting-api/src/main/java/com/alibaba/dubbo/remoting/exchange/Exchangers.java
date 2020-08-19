@@ -46,6 +46,13 @@ public class Exchangers {
         return bind(URL.valueOf(url), replier);
     }
 
+    /**
+     * 服务启动入口
+     * @param url
+     * @param replier
+     * @return
+     * @throws RemotingException
+     */
     public static ExchangeServer bind(URL url, Replier<?> replier) throws RemotingException {
         return bind(url, new ChannelHandlerAdapter(), replier);
     }

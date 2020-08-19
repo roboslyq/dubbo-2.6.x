@@ -31,7 +31,7 @@ public class NettyTransporter implements Transporter {
     public static final String NAME = "netty4";
 
     /**
-     *
+     * 在 Transporters.bind(URL url, ChannelHandler... handlers)方法中被调用
      * @param url     server url
      * @param listener
      * @return

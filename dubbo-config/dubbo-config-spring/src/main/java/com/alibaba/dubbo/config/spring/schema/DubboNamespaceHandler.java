@@ -32,12 +32,14 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  * @export
  */
 public class DubboNamespaceHandler extends NamespaceHandlerSupport {
-
+    // 测试：初始化次数统计
+    private static int count = 0;
     static {
         Version.checkDuplicate(DubboNamespaceHandler.class);
     }
 
     public void init() {
+        System.out.println("DubboNameSpacehandler初始化次数"+ ++count);
         registerBeanDefinitionParser("application", new DubboBeanDefinitionParser(ApplicationConfig.class, true));
         registerBeanDefinitionParser("module", new DubboBeanDefinitionParser(ModuleConfig.class, true));
         registerBeanDefinitionParser("registry", new DubboBeanDefinitionParser(RegistryConfig.class, true));

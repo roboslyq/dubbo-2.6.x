@@ -36,10 +36,9 @@ import org.springframework.beans.factory.support.ManagedMap;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSSerializer;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -69,6 +68,7 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
 
     private static final Logger logger = LoggerFactory.getLogger(DubboBeanDefinitionParser.class);
     private static final Pattern GROUP_AND_VERION = Pattern.compile("^[\\-.0-9_a-zA-Z]+(\\:[\\-.0-9_a-zA-Z]+)?$");
+    private static int count = 0;
     /**
      * Bean 对象的类
      */
@@ -78,6 +78,11 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
      */
     private final boolean required;
 
+    /**
+     * 构造函数
+     * @param beanClass 指定对应的配置类
+     * @param required 是否必须
+     */
     public DubboBeanDefinitionParser(Class<?> beanClass, boolean required) {
         this.beanClass = beanClass;
         this.required = required;
@@ -85,8 +90,9 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
 
     @SuppressWarnings("unchecked")
     private static BeanDefinition parse(Element element, ParserContext parserContext, Class<?> beanClass, boolean required) {
+        // RootBeanDefinition: spring bean的扩展点
         RootBeanDefinition beanDefinition = new RootBeanDefinition();
-        /**
+        /*
          * beanClass即为DubboNamespaceHandler中注册的9大配置类
          * ApplicationConfig.class
          * ModuleConfig.class
@@ -539,7 +545,17 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
     }
 
     public BeanDefinition parse(Element element, ParserContext parserContext) {
+        System.out.println("DubboBeanDefinitionParser被调用次数:" + ++count);
+        printElement(element);
         return parse(element, parserContext, beanClass, required);
     }
 
+    private void printElement(Element ele){
+        Document document = ele.getOwnerDocument();
+        DOMImplementationLS domImplLS = (DOMImplementationLS) document
+                .getImplementation();
+        LSSerializer serializer = domImplLS.createLSSerializer();
+        String str = serializer.writeToString(ele);
+        System.out.println("当前Parser解析的Element: " + str );
+    }
 }
