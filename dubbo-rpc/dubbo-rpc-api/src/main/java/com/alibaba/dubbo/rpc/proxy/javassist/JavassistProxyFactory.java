@@ -30,7 +30,7 @@ import com.alibaba.dubbo.rpc.proxy.InvokerInvocationHandler;
 public class JavassistProxyFactory extends AbstractProxyFactory {
 
     /**
-     * 消费端启动时，获取代理proxy对象<其中InvokerInvocationHandler为生成代理类的类属性，同时完成InvokerInvocationHandler中的invoker初始化。>。
+     * 消费端，启动时,获取代理proxy对象<其中InvokerInvocationHandler为生成代理类的类属性，同时完成InvokerInvocationHandler中的invoker初始化。>。
      */
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
@@ -38,7 +38,7 @@ public class JavassistProxyFactory extends AbstractProxyFactory {
     }
 
     /**
-     * 服务端，生成Invoker,即将service或refrence的ref(proxy),type(interface)及发布的注册中心URL封装为Invoker。使用了包装模式。
+     * 服务端，启动时,生成Invoker,即将service或refrence的ref(proxy),type(interface)及发布的注册中心URL封装为Invoker。使用了包装模式。
      */
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
         // TODO Wrapper cannot handle this scenario correctly: the classname contains '$'
