@@ -89,6 +89,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
     // registry centers
     // 注册中心，支持多种不同的注册心同时存在
+    // 对应配置 <dubbo:registry address="zookeeper://xx.xx.xxx.xxx:2181" id="com.alibaba.dubbo.config.RegistryConfig" />
     protected List<RegistryConfig> registries;
 
     // connection events

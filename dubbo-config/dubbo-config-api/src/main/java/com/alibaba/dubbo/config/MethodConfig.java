@@ -23,7 +23,13 @@ import java.util.List;
 
 /**
  * MethodConfig
- *
+ * 1、dubbo:method：方法级配置。
+ * 2、对应的配置类： org.apache.dubbo.config.MethodConfig。
+ * 3、同时该标签为 <dubbo:service> 或 <dubbo:reference> 的子标签，用于控制到方法级。
+ * 4、示例：
+ *  <dubbo:service delay="0" protocol="p1" id="a" interface="com.alibaba.dubbo.demo.DemoService" ref="demoService" version="0.0.2" group="a">
+        <dubbo:method name="test"></dubbo:method>
+    </dubbo:service>
  * @export
  */
 public class MethodConfig extends AbstractMethodConfig {

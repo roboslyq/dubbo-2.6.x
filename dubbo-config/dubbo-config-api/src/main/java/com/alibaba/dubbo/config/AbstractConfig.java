@@ -62,7 +62,7 @@ public abstract class AbstractConfig implements Serializable {
     private static final Map<String, String> legacyProperties = new HashMap<String, String>();
     private static final String[] SUFFIXES = new String[]{"Config", "Bean"};
 
-    /*
+    /**
      * 系统遗留配置
      */
     static {
@@ -76,7 +76,7 @@ public abstract class AbstractConfig implements Serializable {
         legacyProperties.put("dubbo.service.url", "dubbo.service.address");
     }
 
-    /*
+    /**
      * 添加系统关闭钩子，进行相关销毁操作
      */
     static {

@@ -44,7 +44,8 @@ import java.util.Map;
 
 /**
  * 一、ServiceFactoryBean
- *  (1)DUBBO集成spring的入口，会执行InitializingBean#afterPropertiesSet 和 ApplicationListener#onApplicationEvent。其中前者的优化级高于后者。
+ *  (1)DUBBO集成spring的入口，会执行InitializingBean#afterPropertiesSet 和 ApplicationListener#onApplicationEvent。
+ *      其中前者的优化级高于后者。
  *  (2)每初始化一个<dubbo:service>标签即会生成一个ServiceBean，执行一次afterPropertiesSet方法。
  *  (3)启动服务器的目的：将每一个服务注册到注册中并且开通一个监听服务用来接收客户端的请求。
  *  (4)服务发布过程会动态加载各种扩展点及字节码生成技术，所以要十分小心。需要通过断点来获取具体生成的字节码内容，才能明白流程怎么走。
@@ -122,6 +123,10 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
         }
     }
 
+    /**
+     * 设置Bean名称
+     * @param name
+     */
     public void setBeanName(String name) {
         this.beanName = name;
     }
@@ -139,9 +144,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
      * ========>如果延迟加载(默认延迟)，此方法则为入口
      */
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        if (isDelay()   //isDelay()  默认为true,需要手动设置为false
-                && !isExported() // isExported()当前服务是否已经导出,正常情况为false.
-                && !isUnexported() //是否配置了取消导出服务
+        if (isDelay()                   //isDelay()  默认为true,需要手动设置为false
+                && !isExported()        // isExported()当前服务是否已经导出,正常情况为false.
+                && !isUnexported()      //是否配置了取消导出服务
                 ) {
             if (logger.isInfoEnabled()) {
                 logger.info("The service ready on spring started. service: " + getInterface());
