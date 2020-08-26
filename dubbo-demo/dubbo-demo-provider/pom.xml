@@ -60,5 +60,11 @@ limitations under the License.
             <groupId>com.alibaba</groupId>
             <artifactId>dubbo-remoting-netty</artifactId>
         </dependency>
+        <!-- roboslyq ,添加Qos模块，测试使用。Qos模块通过SPI的wrapper进行装载 -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>dubbo-qos</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
     </dependencies>
 </project>

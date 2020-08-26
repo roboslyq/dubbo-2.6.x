@@ -162,6 +162,7 @@ public class ExtensionLoader<T> {
      * 1、注意：(此处十分重要) 每一个扩展点(例如Protol，Regitstry等)对应一个扩展点加载器
      * 2、比如Protocol是一个扩展点，那么key为Protocol.class,而此时的ExtensionLoader<?>专门为Protocol.class而创建的
      *    不同的Class对应不同的ExtensionLoader
+     * 3、此处是 每一个扩展点(例如Protol，Regitstry等)的加载器缓存，即同一个扩展点，多次加载是使用同一个加载器。
      */
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, ExtensionLoader<?>>();
 
@@ -206,7 +207,7 @@ public class ExtensionLoader<T> {
      *  2. 带唯一参数为拓展接口的构造方法的实现类，或者说拓展 Wrapper 实现类。例如，ProtocolFilterWrapper 。
      *       拓展 Wrapper 实现类，会添加到 {@link #cachedWrapperClasses} 中
      *
-     * 通过 {@link #loadExtensionClasses} 加载
+     * 通过方法{@link #loadExtensionClasses}调用方法{@link #loadFile(Map, String)}完成对应的扩展类加载
      */
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
 
@@ -228,7 +229,7 @@ public class ExtensionLoader<T> {
      * key：dubbo value：DubboProtocol
      * key：injvm value：InjvmProtocol
      *
-     * 通过 {@link #loadExtensionClasses} 加载
+     * 通过方法{@link #loadExtensionClasses}调用方法{@link #loadFile(Map, String)}完成对应的扩展类加载
      */
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
     /**
@@ -259,7 +260,7 @@ public class ExtensionLoader<T> {
      *
      * 带唯一参数为拓展接口的构造方法的实现类
      *
-     * 通过 {@link #loadExtensionClasses} 加载
+     * 通过方法{@link #loadExtensionClasses}调用方法{@link #loadFile(Map, String)}完成对应的扩展类加载
      */
     private Set<Class<?>> cachedWrapperClasses;
 
@@ -559,8 +560,9 @@ public class ExtensionLoader<T> {
         if (instance == null) {
             synchronized (holder) {
                 instance = holder.get();
-                // 从 缓存中 未获取到，进行创建缓存对象。
+                // 从缓存中未获取到，进行创建缓存对象。
                 if (instance == null) {
+                    // ======>创建SPI对象，很关键！！
                     instance = createExtension(name);
                     // 设置创建对象到缓存中
                     holder.set(instance);
@@ -783,7 +785,7 @@ public class ExtensionLoader<T> {
 
     /**
      * 创建拓展名的拓展对象，并缓存。
-     *
+     * 使用@SPI注解,比如最常见的场景是Protocol为"dubbo"时的初始化
      * @param name 拓展名
      * @return 拓展对象
      */
@@ -796,6 +798,9 @@ public class ExtensionLoader<T> {
         }
         try {
             // 从缓存中，获得拓展对象。
+//            0 = {ConcurrentHashMap$MapEntry@2184} "class com.alibaba.dubbo.common.extension.factory.SpiExtensionFactory" ->
+//            1 = {ConcurrentHashMap$MapEntry@2185} "class com.alibaba.dubbo.common.compiler.support.JavassistCompiler" ->
+//            2 = {ConcurrentHashMap$MapEntry@2186} "class com.alibaba.dubbo.config.spring.extension.SpringExtensionFactory" ->
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
             if (instance == null) {
                 // 当缓存不存在时，创建拓展对象，并添加到缓存中。
@@ -804,9 +809,13 @@ public class ExtensionLoader<T> {
             }
             // 注入依赖的属性
             injectExtension(instance);
-            // 创建 Wrapper 拓展对象
+            // 创建 Wrapper 拓展对象(可能的数据如下,Protocol为dubbo时,初始化Protocol):
+            //0 = {Class@1510} "class com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper"
+            //1 = {Class@1511} "class com.alibaba.dubbo.rpc.protocol.ProtocolListenerWrapper"
+            //2 = {Class@1514} "class com.alibaba.dubbo.qos.protocol.QosProtocolWrapper"
             Set<Class<?>> wrapperClasses = cachedWrapperClasses;
             if (wrapperClasses != null && !wrapperClasses.isEmpty()) {
+                // 包装模式，循环使用WrapperClass进行层层的包装
                 for (Class<?> wrapperClass : wrapperClasses) {
                     instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
                 }
@@ -903,11 +912,11 @@ public class ExtensionLoader<T> {
      * @return 拓展实现类数组
      */
     private Map<String, Class<?>> loadExtensionClasses() {
-        // 通过 @SPI 注解，获得默认的拓展实现类名
+        // 通过 @SPI 注解，获得默认的拓展实现类名<通过构造函数传入type>
         final SPI defaultAnnotation = type.getAnnotation(SPI.class);
         if (defaultAnnotation != null) {
 
-            //比如Protocol中的SPI("dubbo")，此处的值为dubbo
+            //比如Protocol中的SPI("dubbo")，此处的值为dubbo,表示Protocol默认使用Dubbo协议
             String value = defaultAnnotation.value();
             if ((value = value.trim()).length() > 0) {
                 String[] names = NAME_SEPARATOR.split(value);
@@ -995,10 +1004,10 @@ public class ExtensionLoader<T> {
                                                 }
                                             } else {
                                                 // 缓存拓展 Wrapper 实现类到 `cachedWrapperClasses`
-                                            	//如果类不包含Adapter注解，则不是自适应类。然后判断是否包含带有参数为type类的构造函数。
-                                            	//如果有，则认为是Wrapper类。这个wrapper类是对实际的扩展进行包装。
-                                                //所以可以在dubbo-rpc-api/internal找到protocol文件，发现有3个装饰器。分别是filter,listener,mock
-                                            	//所以对Protocol这个类来说会添加具体的装饰器
+                                            	// 如果类不包含Adapter注解，则不是自适应类。然后判断是否包含带有参数为type类的构造函数。
+                                            	// 如果有，则认为是Wrapper类。这个wrapper类是对实际的扩展进行包装。
+                                                // 所以可以在dubbo-rpc-api/internal找到protocol文件，发现有3个装饰器。分别是filter,listener,mock
+                                            	// 所以对Protocol这个类来说会添加具体的装饰器
                                             	try {
                                                     clazz.getConstructor(type);
                                                     Set<Class<?>> wrappers = cachedWrapperClasses;

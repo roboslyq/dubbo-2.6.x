@@ -683,7 +683,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
          * 得到host结果可能是：192.168.43.57
          */
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
-        //20880
+        //20880:(此处内容很多,实现了各种Wrapper包装,不仅仅是获得对应的端口)
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
         // 创建 Dubbo URL 对象<关键>
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
@@ -903,7 +903,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      * -> protocol default port
      *
      * @param protocolConfig 协议配置对象
-     * @param name 协议名
+     * @param name 协议名: 比如name = "dubbo"
      * @return 端口
      */
     private Integer findConfigedPorts(ProtocolConfig protocolConfig, String name, Map<String, String> map) {
@@ -920,7 +920,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             if (provider != null && (portToBind == null || portToBind == 0)) {
                 portToBind = provider.getPort();
             }
-            // 第三优先级，获得协议对应的缺省端口，
+            // 第三优先级，获得协议对应的缺省端口(此处会通过SPI完成种Protocol的包装)
             final int defaultPort = ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(name).getDefaultPort();
             if (portToBind == null || portToBind == 0) {
                 portToBind = defaultPort;

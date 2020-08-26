@@ -23,8 +23,9 @@ limitations under the License.
 
     <!-- provider's application name, used for tracing dependency relationship -->
     <dubbo:application name="demo-provider">
-        <dubbo:parameter key="qos.enable" value="true"></dubbo:parameter>
-        <dubbo:parameter key="qos.port" value="22222"></dubbo:parameter>
+        <dubbo:parameter key="qos.enable" value="true"/>
+        <dubbo:parameter key="qos.accept.foreign.ip" value="false"/>
+        <dubbo:parameter key="qos.port" value="33333"/>
     </dubbo:application>
 
     <!-- use multicast registry center to export service -->
