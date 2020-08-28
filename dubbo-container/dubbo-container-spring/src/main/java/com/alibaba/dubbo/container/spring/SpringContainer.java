@@ -27,7 +27,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  * SpringContainer. (SPI, Singleton, ThreadSafe)
  *  Dubbo没有实现自己的容器,而是集成了Spring容器.
  *  因此,spring这个容器对Dubbo来说是强依赖,是必须的，不能少的。
- *  如果少了就不能解析Dubbo配置文件，因此也不对对外提供服务。
+ *  如果少了就不能解析Dubbo配置文件，因此也不能对外提供服务。
  */
 public class SpringContainer implements Container {
 

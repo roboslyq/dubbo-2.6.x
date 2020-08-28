@@ -21,7 +21,8 @@ import com.alibaba.dubbo.common.extension.SPI;
 /**
  * Container. (SPI, Singleton, ThreadSafe)
  * 1、Dubbo的Container是一个独立的容器，因为服务通常不需要Tomcat/JBoss等Web容器的特性，没必要用Web容器去加载服务。
- * 2、服务容器只是一个简单的Main方法，并加载一个简单的Spring容器，用于暴露服务。
+ * 2、服务容器只是一个简单的Main方法，并加载一个简单的Spring容器，用于暴露服务。因为Dubbo离不开Spring。
+ *    具体jetty容器，log4j容器等等，只是启动相关的Jetty，log4j等相关配置。底层还是Spring容器。
  *    com.alibaba.dubbo.container.Main 是服务启动的主类
  * 3、Container接口有只有 start()  stop()他的实现类。 具体实现类有
  *          SpringContainer：Spring容器， 自动加载META-INF/spring目录下的所有Spring配置。最为关键的容器。
